@@ -346,6 +346,11 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
             converted_parameters['lambda_1']\
             * converted_parameters['mass_1']**5\
             / converted_parameters['mass_2']**5
+    elif any(key.startswith('upsilon_') for key in converted_parameters):
+        # extract the dict entries that have upsilon_ in their keys
+        upsilon_dictionary = dict(filter(lambda dict_entry: 'upsilon_' in dict_entry[0], converted_parameters.items()))
+        # sort the upsilon entries, return an array with their values
+        sorted_upsilon_values = np.array([*dict(sorted(upsilon_dictionary.items())).values()])
     elif 'eos_spectral_pca_gamma_0' in converted_parameters.keys():  # FIXME: This is a clunky way to do this
         converted_parameters = generate_source_frame_parameters(converted_parameters)
         float_eos_params = {}
