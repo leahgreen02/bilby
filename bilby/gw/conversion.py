@@ -348,6 +348,7 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
             / converted_parameters['mass_2']**5
     elif any(key.startswith('upsilon_') for key in converted_parameters):
         # extract the dict entries that have upsilon_ in their keys
+        # test comment
         upsilon_dictionary = dict(filter(lambda dict_entry: 'upsilon_' in dict_entry[0], converted_parameters.items()))
         # sort the upsilon entries, return an array with their values
         sorted_upsilon_values = np.array([*dict(sorted(upsilon_dictionary.items())).values()])
