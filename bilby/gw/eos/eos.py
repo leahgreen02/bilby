@@ -8,6 +8,7 @@ from ...core import utils
 from numpy.polynomial import chebyshev as cheb
 from scipy.integrate import solve_ivp
 
+
 C_SI = utils.speed_of_light  # m/s
 C_CGS = C_SI * 100.
 G_SI = utils.gravitational_constant  # m^3 kg^-1 s^-2
@@ -635,7 +636,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         self.energy_density = np.asarray(energy_density, float)
 
         # Build SLY4 interpolator (geom) and drop leading non-positive rows
-        low_density_path = os.path.join('/home/leah.green/Chebyshev', 'eos_tables', 'LALSimNeutronStarEOS_MPA1.dat')
+        low_density_path = os.path.join('/home/leah.green/Chebyshev', 'eos_tables', 'LALSimNeutronStarEOS_SLY4.dat')
         ld = np.loadtxt(low_density_path)
         mpos = (ld[:, 0] > 0.0) & (ld[:, 1] > 0.0)
         ld = ld[int(np.flatnonzero(mpos)[0]):, :]
@@ -666,7 +667,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         e_at_p0 = float(interp_e(self.p0_geom))
         dede_p0_sly = float(self._sly_interp.derivative()(self.p0_geom))
         gamma0 = ((self.e0_geom + self.p0_geom) / self.p0_geom) / dede_p0_sly
-        # Bound Γ0 mildly to avoid bad ICs; does not clamp dynamics
+
         self.upsilon0 = float(np.clip(gamma0, 0.6, 4.6))
         print("upsilon0:", self.upsilon0)
 
@@ -680,68 +681,73 @@ class ChebSpectralDecompositionEOS(TabularEOS):
 
         super().__init__(self.e_pdat, sampling_flag=self.sampling_flag, warning_flag=self.warning_flag)
 
-    def generating_function(self, x, upsilons, clamp=False):
-        # Γ(x); no hard clamping in dynamics
+    # try without clamp=False
+    def generating_function(self, x, upsilons):
         x = np.asarray(x, float)
         y = -1.0 + 2.0 * (x / self.xmax)
         s = cheb.chebval(y, upsilons)
         arg = (1.0 + y) * s
-        # gamma = self.upsilon0 * np.exp(np.clip(arg, -50.0, 50.0))
-        # if clamp and self.sampling_flag:
-        #     gamma = np.clip(gamma, 0.6, 4.6)
         gamma = self.upsilon0 * np.exp(arg)
         return gamma
 
     def compute_energy_density_array(self, x_array, upsilons):
-        # array and float
-        x = np.asarray(x_array, float)
+            #array and float
+            x = np.asarray(x_array, float)
+            #output array that will be returned with the correct(?) values
 
-        # Find the range of x values to integrate over
-        x_min, x_max = x.min(), x.max()
-        if x_min > 0:
-            x_min = 0.0
-        if x_max < 0:
-            x_max = 0.0
+            # Find the range of x values to integrate over
+            x_min, x_max = x.min(), x.max()
+    
+            # Ensure we include x=0 in our integration range
+            if x_min > 0:
+                x_min = 0.0
+            if x_max < 0:
+                x_max = 0.0
+    
+            # integration
+            integration_points = np.unique(np.concatenate([
+                [x_min],  # Start point
+                x,        # All original x values
+                [x_max]   # End point
+            ]))
+    
+            # Sort the integration points
+            integration_points = np.sort(integration_points)
 
-        # Integration points
-        integration_points = np.unique(np.concatenate([
-            [x_min],
-            x,
-            [x_max]
-        ]))
-        integration_points = np.sort(integration_points)
+            #integration of dimensionless x values
+            # use generating function
+            G = self.generating_function(integration_points, upsilons)
+            # inverse of generating function
+            s = 1.0 / G
+            # pressure back to cgs units
+            p = self.p0_geom * np.exp(integration_points)
+            #interpolators
+            s_interp = interp1d(integration_points, s, kind='linear', fill_value='extrapolate')
+            p_interp = interp1d(integration_points, p, kind='linear', fill_value='extrapolate')
+            # diff eq
+            def energy_density_ode(x_val, e_val):
+                s_val = s_interp(x_val)
+                p_val = p_interp(x_val)
+                return s_val * (e_val + p_val)
 
-        # Generating function
-        G = self.generating_function(integration_points, upsilons)
-        s = 1.0 / G
-        p = self.p0_geom * np.exp(integration_points)
-
-        # Interpolators for ODE
-        s_interp = interp1d(integration_points, s, kind='linear', fill_value='extrapolate')
-        p_interp = interp1d(integration_points, p, kind='linear', fill_value='extrapolate')
-
-        def energy_density_ode(x_val, e_val):
-            return s_interp(x_val) * (e_val + p_interp(x_val))
-
-        # The dense grid helps lessen gaps (or at least it should)
-        dense_points = np.linspace(x_min, x_max, max(200, len(integration_points)))
-
-        # Solve ivp bc quad is slower and less intuitive and i do not like it
-        solution = solve_ivp(
-            energy_density_ode,
-            t_span=(x_min, x_max),
-            y0=[self.e0_geom],
-            t_eval=dense_points,
-            method='RK45',
-            rtol=1e-9,
-            atol=1e-12
-        )
-
-        # using solution.t instead of integration points for x bc it fixes error that appeared in sly4 and smaller errors
-        e_interp = interp1d(solution.t, solution.y[0], kind='linear', fill_value='extrapolate')
-
-        # Return at original x positions
-        return e_interp(x)
+            # compare the below to chebyshev_eos file if errors
+            #dense_points = np.linspace(x_min, x_max, max(200, len(integration_points)))
+            # Solve the ivp over the entire range
+            solution = solve_ivp(
+                energy_density_ode,
+                t_span=(x_min, x_max),      # Integration range
+                y0=[self.e0_geom],          # Initial condition: e(0) = e0_geom
+                t_eval=integration_points,  # Points where to evaluate the solution
+                method='RK45',              # Runge-Kutta method
+                rtol=1e-8,                  # Tolerances
+                atol=1e-10                  # using integration not dense points 
+            )
+    
+                # Create interpolator
+            e_interp = interp1d(integration_points, solution.y[0], kind='linear', fill_value='extrapolate')
+            # change integration_points to solution.t if error
+                # Return energy density values at the original x positions
+            return e_interp(x)
                 
     
     def compute_energy_density(self, x, upsilons):
@@ -781,7 +787,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         eos_vals = np.column_stack([p_range_geom, eps_range_geom])
 
         # Load SLY4 (geom) and drop leading non-positive row(s) to avoid log10(0)
-        low_density_path = os.path.join('/home/leah.green/Chebyshev', 'eos_tables', 'LALSimNeutronStarEOS_MPA1.dat')
+        low_density_path = os.path.join('/home/leah.green/Chebyshev', 'eos_tables', 'LALSimNeutronStarEOS_SLY4.dat')
         low_density = np.loadtxt(low_density_path)
         mask_pos = (low_density[:, 0] > 0.0) & (low_density[:, 1] > 0.0)
         low_density = low_density[int(np.flatnonzero(mask_pos)[0]):, :]
