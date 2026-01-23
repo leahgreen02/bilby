@@ -319,7 +319,7 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
     if not any([key in converted_parameters for key in
                 ['lambda_1', 'lambda_2',
                  'lambda_tilde', 'delta_lambda_tilde', 'lambda_symmetric',
-                 'eos_polytrope_gamma_0', 'eos_spectral_pca_gamma_0', 'eos_v1']]):
+                 'eos_polytrope_gamma_0', 'eos_spectral_pca_gamma_0', 'eos_v1', 'upsilon_0']]):
         converted_parameters['lambda_1'] = 0
         converted_parameters['lambda_2'] = 0
         added_keys = added_keys + ['lambda_1', 'lambda_2']
@@ -352,6 +352,7 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
         upsilon_dictionary = dict(filter(lambda dict_entry: 'upsilon_' in dict_entry[0], converted_parameters.items()))
         # sort the upsilon entries, return an array with their values
         sorted_upsilon_values = np.array([*dict(sorted(upsilon_dictionary.items())).values()])
+        converted_parameters = generate_source_frame_parameters(converted_parameters)
     elif 'eos_spectral_pca_gamma_0' in converted_parameters.keys():  # FIXME: This is a clunky way to do this
         converted_parameters = generate_source_frame_parameters(converted_parameters)
         float_eos_params = {}
@@ -692,6 +693,41 @@ def spectral_params_to_lambda_1_lambda_2(gamma_0, gamma_1, gamma_2, gamma_3, mas
 
     return lambda_1, lambda_2, eos_check
 
+def chebyshev_params_to_lambda_1_lambda_2(upsilon_0, upsilon_1, upsilon_2, upsilon_3, mass_1_source, mass_2_source):
+    '''
+    Converts Chebyshev parameters and the source masses to the tidal deformability parameters.
+
+    Parameters
+    ----------
+    upsilon_0, upsilon_1, upsilon_2, upsilon_3: float
+        
+    mass_1_source, mass_2_source: float
+        sampled component mass parameters converted to source frame in solar masses
+
+    Returns
+    -------
+    lambda_1, lambda_2: float
+        component tidal deformability parameters
+    eos_check: bool
+        whether or not the equation of state is viable /
+            if eos_check = False, lambdas are 0 and the sample is rejected.
+
+    '''
+    eos_check = True
+    if lalsim_SimNeutronStarEOS4ParamSDGammaCheck(upsilon_0, upsilon_1, upsilon_2, upsilon_3) != 0:
+        lambda_1 = 0.0
+        lambda_2 = 0.0
+        eos_check = False
+    else:
+        eos = lalsim_SimNeutronStarEOS4ParameterSpectralDecomposition(upsilon_0, upsilon_1, upsilon_2, upsilon_3)
+        if lalsim_SimNeutronStarEOS4ParamSDViableFamilyCheck(upsilon_0, upsilon_1, upsilon_2, upsilon_3) != 0:
+            lambda_1 = 0.0
+            lambda_2 = 0.0
+            eos_check = False
+        else:
+            lambda_1, lambda_2, eos_check = neutron_star_family_physical_check(eos, mass_1_source, mass_2_source)
+
+    return lambda_1, lambda_2, eos_check
 
 def polytrope_or_causal_params_to_lambda_1_lambda_2(
         param1, log10_pressure1_cgs, param2, log10_pressure2_cgs, param3, mass_1_source, mass_2_source, causal):
