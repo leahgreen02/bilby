@@ -34,6 +34,8 @@ from .utils import lalsim_SimInspiralTransformPrecessingNewInitialConditions
 from .eos.eos import IntegrateTOV
 from .cosmology import get_cosmology, z_at_value
 
+from bilby.gw.eos.eos import ChebyshevNeutronStarEOSSpectralDecomposition
+
 
 def redshift_to_luminosity_distance(redshift, cosmology=None):
     cosmology = get_cosmology(cosmology)
@@ -348,11 +350,13 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
             / converted_parameters['mass_2']**5
     elif any(key.startswith('upsilon_') for key in converted_parameters):
         # extract the dict entries that have upsilon_ in their keys
-        # test comment
         upsilon_dictionary = dict(filter(lambda dict_entry: 'upsilon_' in dict_entry[0], converted_parameters.items()))
         # sort the upsilon entries, return an array with their values
         sorted_upsilon_values = np.array([*dict(sorted(upsilon_dictionary.items())).values()])
         converted_parameters = generate_source_frame_parameters(converted_parameters)
+        converted_parameters['lambda_1'], converted_parameters['lambda_2'], converted_parameters['eos_check'] = \
+                chebyshev_params_to_lambda_1_lambda_2(
+                    sorted_upsilon_values, converted_parameters['mass_1_source'], converted_parameters['mass_2_source'])
     elif 'eos_spectral_pca_gamma_0' in converted_parameters.keys():  # FIXME: This is a clunky way to do this
         converted_parameters = generate_source_frame_parameters(converted_parameters)
         float_eos_params = {}
@@ -693,13 +697,13 @@ def spectral_params_to_lambda_1_lambda_2(gamma_0, gamma_1, gamma_2, gamma_3, mas
 
     return lambda_1, lambda_2, eos_check
 
-def chebyshev_params_to_lambda_1_lambda_2(upsilon_0, upsilon_1, upsilon_2, upsilon_3, mass_1_source, mass_2_source):
+def chebyshev_params_to_lambda_1_lambda_2(upsilons, mass_1_source, mass_2_source):
     '''
     Converts Chebyshev parameters and the source masses to the tidal deformability parameters.
 
     Parameters
     ----------
-    upsilon_0, upsilon_1, upsilon_2, upsilon_3: float
+    upsilons: float
         
     mass_1_source, mass_2_source: float
         sampled component mass parameters converted to source frame in solar masses
@@ -713,19 +717,10 @@ def chebyshev_params_to_lambda_1_lambda_2(upsilon_0, upsilon_1, upsilon_2, upsil
             if eos_check = False, lambdas are 0 and the sample is rejected.
 
     '''
+    upsilons = np.asarray(upsilons, dtype=float)
     eos_check = True
-    if lalsim_SimNeutronStarEOS4ParamSDGammaCheck(upsilon_0, upsilon_1, upsilon_2, upsilon_3) != 0:
-        lambda_1 = 0.0
-        lambda_2 = 0.0
-        eos_check = False
-    else:
-        eos = lalsim_SimNeutronStarEOS4ParameterSpectralDecomposition(upsilon_0, upsilon_1, upsilon_2, upsilon_3)
-        if lalsim_SimNeutronStarEOS4ParamSDViableFamilyCheck(upsilon_0, upsilon_1, upsilon_2, upsilon_3) != 0:
-            lambda_1 = 0.0
-            lambda_2 = 0.0
-            eos_check = False
-        else:
-            lambda_1, lambda_2, eos_check = neutron_star_family_physical_check(eos, mass_1_source, mass_2_source)
+    eos = ChebyshevNeutronStarEOSSpectralDecomposition(upsilons)
+    lambda_1, lambda_2, eos_check = neutron_star_family_physical_check(eos, mass_1_source, mass_2_source)
 
     return lambda_1, lambda_2, eos_check
 
