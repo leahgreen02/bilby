@@ -759,7 +759,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
             adat = np.empty(self.npts)
             i = 0
             for i in range(self.npts):
-                g = self.generating_function(xdat[i], self.upsilons, clamp=True)
+                g = self.generating_function(xdat[i], self.upsilons) #, clamp=True
                 if 0.6 < g < 4.6:
                     adat[i] = g
                 else:
@@ -770,7 +770,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
                 self.warning_flag = True
             else:
                 xdat = np.linspace(0.0, xmax_new, num=self.npts)
-                adat = self.generating_function(xdat, self.upsilons, clamp=True)
+                adat = self.generating_function(xdat, self.upsilons) #, clamp=True
                 self.xmax = xmax_new
         else:
             adat = self.generating_function(xdat, self.upsilons)
@@ -808,6 +808,32 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         #print('eos_vals', eos_vals)
 
         return eos_vals
+    
+def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
+
+    upsilons = np.asarray(upsilons) # turn the upsilons into an array
+
+    ndat_low = 69
+    ndat = ndat_low + 500
+
+    # Minimum pressure and energy density (cgs)
+    e0 = 2.03e14
+     # 9.54629006e-11
+    p0 = 3.01e33
+     # 4.43784199e-13
+
+    xmax = 12.3081  # very relaxed upper limit
+    pmax = p0 * np.exp(xmax) # give units back to xmax
+
+    # initialize class
+    model = ChebSpectralDecompositionEOS(
+        upsilons=upsilons, pressure=[], energy_density=[],
+        p0=p0, e0=e0, pmax=pmax, xmax=xmax, npts=ndat
+    )
+    
+    eos = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
+
+    return eos
 
 class EOSFamily(object):
     """
