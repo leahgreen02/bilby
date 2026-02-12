@@ -34,6 +34,8 @@ from .utils import lalsim_SimInspiralTransformPrecessingNewInitialConditions
 from .eos.eos import IntegrateTOV
 from .cosmology import get_cosmology, z_at_value
 
+from bilby.gw.eos.eos import ChebyshevNeutronStarEOSSpectralDecomposition
+
 
 def redshift_to_luminosity_distance(redshift, cosmology=None):
     cosmology = get_cosmology(cosmology)
@@ -319,7 +321,7 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
     if not any([key in converted_parameters for key in
                 ['lambda_1', 'lambda_2',
                  'lambda_tilde', 'delta_lambda_tilde', 'lambda_symmetric',
-                 'eos_polytrope_gamma_0', 'eos_spectral_pca_gamma_0', 'eos_v1']]):
+                 'eos_polytrope_gamma_0', 'eos_spectral_pca_gamma_0', 'eos_v1', 'upsilon_0']]):
         converted_parameters['lambda_1'] = 0
         converted_parameters['lambda_2'] = 0
         added_keys = added_keys + ['lambda_1', 'lambda_2']
@@ -346,6 +348,15 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
             converted_parameters['lambda_1']\
             * converted_parameters['mass_1']**5\
             / converted_parameters['mass_2']**5
+    elif any(key.startswith('upsilon_') for key in converted_parameters):
+        # extract the dict entries that have upsilon_ in their keys
+        upsilon_dictionary = dict(filter(lambda dict_entry: 'upsilon_' in dict_entry[0], converted_parameters.items()))
+        # sort the upsilon entries, return an array with their values
+        sorted_upsilon_values = np.array([*dict(sorted(upsilon_dictionary.items())).values()])
+        converted_parameters = generate_source_frame_parameters(converted_parameters)
+        converted_parameters['lambda_1'], converted_parameters['lambda_2'], converted_parameters['eos_check'] = \
+                chebyshev_params_to_lambda_1_lambda_2(
+                    sorted_upsilon_values, converted_parameters['mass_1_source'], converted_parameters['mass_2_source'])
     elif 'eos_spectral_pca_gamma_0' in converted_parameters.keys():  # FIXME: This is a clunky way to do this
         converted_parameters = generate_source_frame_parameters(converted_parameters)
         float_eos_params = {}
@@ -686,6 +697,32 @@ def spectral_params_to_lambda_1_lambda_2(gamma_0, gamma_1, gamma_2, gamma_3, mas
 
     return lambda_1, lambda_2, eos_check
 
+def chebyshev_params_to_lambda_1_lambda_2(upsilons, mass_1_source, mass_2_source):
+    '''
+    Converts Chebyshev parameters and the source masses to the tidal deformability parameters.
+
+    Parameters
+    ----------
+    upsilons: float
+        
+    mass_1_source, mass_2_source: float
+        sampled component mass parameters converted to source frame in solar masses
+
+    Returns
+    -------
+    lambda_1, lambda_2: float
+        component tidal deformability parameters
+    eos_check: bool
+        whether or not the equation of state is viable /
+            if eos_check = False, lambdas are 0 and the sample is rejected.
+
+    '''
+    upsilons = np.asarray(upsilons, dtype=float)
+    eos_check = True
+    eos = ChebyshevNeutronStarEOSSpectralDecomposition(upsilons)
+    lambda_1, lambda_2, eos_check = neutron_star_family_physical_check(eos, mass_1_source, mass_2_source)
+
+    return lambda_1, lambda_2, eos_check
 
 def polytrope_or_causal_params_to_lambda_1_lambda_2(
         param1, log10_pressure1_cgs, param2, log10_pressure2_cgs, param3, mass_1_source, mass_2_source, causal):
