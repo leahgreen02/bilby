@@ -1,6 +1,9 @@
 import os
 import numpy as np
 from scipy.interpolate import interp1d, CubicSpline
+from numpy.polynomial import chebyshev as cheb
+from scipy.interpolate import PchipInterpolator
+from scipy.integrate import solve_ivp
 
 from .tov_solver import IntegrateTOV
 from ...core import utils
