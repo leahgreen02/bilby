@@ -634,12 +634,8 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         self.pressure = np.asarray(pressure, float)
         self.energy_density = np.asarray(energy_density, float)
 
-        # Build SLY4 interpolator (geom) and drop leading non-positive rows
-        low_density_path = os.path.join('/home/leah.green/Chebyshev', 'eos_tables', 'LALSimNeutronStarEOS_SLY4.dat')
-        ld = np.loadtxt(low_density_path)
-        mpos = (ld[:, 0] > 0.0) & (ld[:, 1] > 0.0)
-        ld = ld[int(np.flatnonzero(mpos)[0]):, :]
-        self._sly_interp = PchipInterpolator(ld[:, 0], ld[:, 1], extrapolate=True)
+        # Build SLY4 interpolator (geom)
+        self._sly_interp = self._load_sly4_interp()
         
         # Unit conversions
         self.geom_factor = 0.1 * G_SI / (C_SI**4)  # cgs to geom
@@ -647,7 +643,6 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         self.e0_cgs_mass = float(e0)               # e0 / c^2 in cgs
         self.p0_geom = self.p0_cgs * self.geom_factor
         self.e0_geom = float(self._sly_interp(self.p0_geom))
-        print('e0 geom', self.e0_geom)
 
         # Domain (keep p0 fixed)
         if pmax is None:
@@ -658,17 +653,12 @@ class ChebSpectralDecompositionEOS(TabularEOS):
             self.pmax_geom = pmax_val * self.geom_factor if pmax_val > 1e20 else pmax_val
         if self.pmax_geom <= self.p0_geom:
             raise ValueError("With fixed p0, pmax must be strictly greater than p0.")
+        
         self.xmax = float(np.log(self.pmax_geom / self.p0_geom)) if xmax is None else float(xmax)
         self.npts = int(npts)
 
         # upsilon0 situation
-        interp_e = PchipInterpolator(self.pressure, self.energy_density, extrapolate=True)
-        e_at_p0 = float(interp_e(self.p0_geom))
-        dede_p0_sly = float(self._sly_interp.derivative()(self.p0_geom))
-        gamma0 = ((self.e0_geom + self.p0_geom) / self.p0_geom) / dede_p0_sly
-
-        self.upsilon0 = float(np.clip(gamma0, 0.6, 4.6))
-        print("upsilon0:", self.upsilon0)
+        self.upsilon0 = self._compute_upsilon0()
 
         self.__construct_a_of_x_table()
 
@@ -679,6 +669,19 @@ class ChebSpectralDecompositionEOS(TabularEOS):
             self.e_pdat = self.__construct_e_of_p_table()
 
         super().__init__(self.e_pdat, sampling_flag=self.sampling_flag, warning_flag=self.warning_flag)
+
+    def _load_sly4_interp(self):
+        low_density_path = os.path.join(os.path.dirname(__file__), 'eos_tables', 'LALSimNeutronStarEOS_SLY4.dat')
+        ld = np.loadtxt(low_density_path)
+        ld = ld[(ld[:, 0] > 0) & (ld[:, 1] > 0)]  # keep only positive rows
+        self._sly_table = ld
+        return PchipInterpolator(ld[:, 0], ld[:, 1], extrapolate=True)    
+
+    def _compute_upsilon0(self):
+        #interp_e = PchipInterpolator(self.pressure, self.energy_density, extrapolate=True)
+        dede_p0_sly = float(self._sly_interp.derivative()(self.p0_geom))
+        gamma0 = ((self.e0_geom + self.p0_geom) / self.p0_geom) / dede_p0_sly
+        return float(np.clip(gamma0, 0.6, 4.6))
 
     # try without clamp=False
     def generating_function(self, x, upsilons):
@@ -785,14 +788,8 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         eps_range_geom = self.compute_energy_density_array(x_range, self.upsilons)
         eos_vals = np.column_stack([p_range_geom, eps_range_geom])
 
-        # Load SLY4 (geom) and drop leading non-positive row(s) to avoid log10(0)
-        low_density_path = os.path.join('/home/leah.green/Chebyshev', 'eos_tables', 'LALSimNeutronStarEOS_SLY4.dat')
-        low_density = np.loadtxt(low_density_path)
-        mask_pos = (low_density[:, 0] > 0.0) & (low_density[:, 1] > 0.0)
-        low_density = low_density[int(np.flatnonzero(mask_pos)[0]):, :]
-        self._sly_interp = PchipInterpolator(low_density[:, 0], low_density[:, 1], extrapolate=True)
-        first_pos = int(np.flatnonzero(mask_pos)[0])
-        low_density = low_density[first_pos:, :]
+        # Load SLY4 (geom)
+        low_density = self._sly_table
 
         # Find overlap point
         cutoff = eos_vals[0, :]
@@ -824,9 +821,68 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
     xmax = 12.3081  # very relaxed upper limit
     pmax = p0 * np.exp(xmax) # give units back to xmax
 
+    pressure = np.array([
+            8.34363176e-38, 8.34363158e-37, 8.34363158e-36, 8.34363204e-35,
+            9.99590323e-34, 1.15654576e-32, 1.40438658e-31, 4.80792427e-30,
+            1.56955470e-28, 8.04954335e-27, 4.10409137e-26, 2.00824991e-25,
+            9.50846400e-25, 4.35032199e-24, 1.91489794e-23, 8.05870148e-23,
+            3.23083653e-22, 4.34456135e-22, 1.18546722e-21, 3.16643535e-21,
+            8.31069246e-21, 2.15123216e-20, 5.51515411e-20, 7.21853315e-20,
+            1.34573133e-19, 2.50233629e-19, 3.41104119e-19, 4.16022078e-19,
+            5.66714695e-19, 1.05080103e-18, 1.94635992e-18, 3.60350588e-18,
+            4.67734957e-18, 6.36270771e-18, 8.65766111e-18, 1.17719556e-17,
+            1.60101658e-17, 2.06777667e-17, 2.81208180e-17, 3.82314916e-17,
+            4.91456998e-17, 6.68234984e-17, 9.08719781e-17, 1.23502352e-16,
+            1.67945004e-16, 2.14547164e-16, 2.38904345e-16, 2.71784343e-16,
+            3.69523312e-16, 4.80467457e-16, 6.44778806e-16, 6.51794987e-16,
+            6.89962998e-16, 7.51587087e-16, 8.12147785e-16, 8.94672702e-16,
+            1.00619290e-15, 1.15571864e-15, 7.67630482e-15, 1.54310830e-14,
+            2.76006879e-14, 4.25728200e-14, 5.97616412e-14, 7.89063920e-14,
+            9.98687894e-14, 1.22577195e-13, 1.47001397e-13, 1.73138786e-13,
+            2.01005994e-13, 2.30633510e-13, 2.62062083e-13, 2.95340235e-13,
+            3.30522500e-13, 3.67668165e-13, 4.06840346e-13, 4.48105310e-13,
+            4.91531976e-13, 5.36657977e-13, 7.42975692e-13, 1.90396753e-12,
+            4.20379487e-12, 8.33964365e-12, 1.54208076e-11, 2.54206991e-11,
+            3.95859812e-11, 5.93051173e-11, 8.57893204e-11, 1.18964736e-10,
+            1.59082469e-10, 2.06792439e-10, 2.61740144e-10, 3.23777876e-10,
+            3.93053343e-10, 4.69861963e-10, 5.54351445e-10, 6.45930954e-10,
+            7.44305072e-10, 8.48439836e-10, 9.56858157e-10, 1.06882149e-09,
+            1.18447755e-09, 1.30515571e-09
+        ])
+
+    energy_density = np.array([
+        5.76064628e-24, 5.80495921e-24, 5.83450097e-24, 6.01913680e-24,
+        8.56711563e-24, 1.21121289e-23, 3.33083545e-23, 1.56571417e-22,
+        8.49326096e-22, 7.71040409e-21, 1.93646347e-20, 4.86479199e-20,
+        1.22155249e-19, 3.06939069e-19, 7.71040347e-19, 1.93646353e-18,
+        4.86553076e-18, 6.12474889e-18, 1.22229097e-17, 2.43867369e-17,
+        4.86626935e-17, 9.71185959e-17, 1.93794050e-16, 2.44015087e-16,
+        3.86775695e-16, 6.13065718e-16, 7.71778906e-16, 9.71924446e-16,
+        1.22376810e-15, 1.93941772e-15, 3.07529885e-15, 4.87513190e-15,
+        6.13878125e-15, 7.72517467e-15, 9.73401567e-15, 1.22524524e-14,
+        1.54355785e-14, 1.94311035e-14, 2.44679768e-14, 3.08120733e-14,
+        3.88031234e-14, 4.88694867e-14, 6.15355240e-14, 7.74733127e-14,
+        9.76355731e-14, 1.22893792e-13, 1.36187588e-13, 1.54798914e-13,
+        1.94975724e-13, 2.45566027e-13, 3.17500257e-13, 3.29390815e-13,
+        3.86111031e-13, 4.88177866e-13, 5.88176782e-13, 7.18455992e-13,
+        8.83299112e-13, 1.08639886e-12, 4.97965079e-12, 9.96810241e-12,
+        1.49620990e-11, 1.99607387e-11, 2.49634397e-11, 2.99697938e-11,
+        3.49795013e-11, 3.99923351e-11, 4.50081194e-11, 5.00267156e-11,
+        5.50480142e-11, 6.00719276e-11, 6.50983862e-11, 7.01273342e-11,
+        7.51587276e-11, 8.01925324e-11, 8.52287224e-11, 9.02672780e-11,
+        9.53081864e-11, 1.00351439e-10, 1.25434385e-10, 1.76068991e-10,
+        2.27176265e-10, 2.79022084e-10, 3.31754156e-10, 3.85815608e-10,
+        4.41501857e-10, 4.99108322e-10, 5.59225839e-10, 6.22149824e-10,
+        6.88323404e-10, 7.57894289e-10, 8.31305605e-10, 9.08705061e-10,
+        9.90388074e-10, 1.07650235e-09, 1.16719561e-09, 1.26261555e-09,
+        1.36290988e-09, 1.46822632e-09, 1.57900798e-09, 1.69422091e-09,
+        1.81386511e-09, 1.93794057e-09
+    ])
+
+
     # initialize class
     model = ChebSpectralDecompositionEOS(
-        upsilons=upsilons, pressure=[], energy_density=[],
+        upsilons=upsilons, pressure=pressure, energy_density=energy_density,
         p0=p0, e0=e0, pmax=pmax, xmax=xmax, npts=ndat
     )
     
