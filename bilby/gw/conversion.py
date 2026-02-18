@@ -1064,6 +1064,7 @@ def neutron_star_family_physical_check(eos, mass_1_source, mass_2_source):
 
     """
     eos_check = True
+    print(f"DEBUG: eos type is {type(eos)}")
     print(f"eos inside neutron star family physical check func: {eos}")
     family = lalsim_CreateSimNeutronStarFamily(eos)
     max_pseudo_enthalpy = lalsim_SimNeutronStarEOSMaxPseudoEnthalpy(eos)
