@@ -956,7 +956,6 @@ def chebyshev_params_to_lambda_1_lambda_2(
     lambda_1, lambda_2, eos_check = neutron_star_family_physical_check(
         eos, mass_1_source, mass_2_source
     )
-    print(f"lambda 1 and lambda 2: {lambda_1}, {lambda_2}")
     return lambda_1, lambda_2, eos_check
 
 
@@ -1081,6 +1080,7 @@ def neutron_star_family_physical_check(eos, mass_1_source, mass_2_source):
     ):
         lambda_1 = lambda_from_mass_and_family(mass_1_source, family)
         lambda_2 = lambda_from_mass_and_family(mass_2_source, family)
+        print(f"lambda 1 and lambda 2: {lambda_1}, {lambda_2}")
     else:
         lambda_1 = 0.0
         lambda_2 = 0.0
