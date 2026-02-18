@@ -357,6 +357,7 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
         converted_parameters['lambda_1'], converted_parameters['lambda_2'], converted_parameters['eos_check'] = \
                 chebyshev_params_to_lambda_1_lambda_2(
                     sorted_upsilon_values, converted_parameters['mass_1_source'], converted_parameters['mass_2_source'])
+        print(f'converted parameters: {converted_parameters}')
     elif 'eos_spectral_pca_gamma_0' in converted_parameters.keys():  # FIXME: This is a clunky way to do this
         converted_parameters = generate_source_frame_parameters(converted_parameters)
         float_eos_params = {}
@@ -720,6 +721,8 @@ def chebyshev_params_to_lambda_1_lambda_2(upsilons, mass_1_source, mass_2_source
     upsilons = np.asarray(upsilons, dtype=float)
     eos_check = True
     eos = ChebyshevNeutronStarEOSSpectralDecomposition(upsilons)
+    print(f'eos: {eos}')
+    print(f'lambda 1 and lambda 2: {lambda_1}, {lambda_2}')
     lambda_1, lambda_2, eos_check = neutron_star_family_physical_check(eos, mass_1_source, mass_2_source)
 
     return lambda_1, lambda_2, eos_check
