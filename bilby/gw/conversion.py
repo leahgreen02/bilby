@@ -448,7 +448,6 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
             converted_parameters["mass_1_source"],
             converted_parameters["mass_2_source"],
         )
-        print(f"converted parameters: {converted_parameters}")
     elif (
         "eos_spectral_pca_gamma_0" in converted_parameters.keys()
     ):  # FIXME: This is a clunky way to do this
@@ -787,7 +786,7 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
     added_keys = [
         key for key in converted_parameters.keys() if key not in original_keys
     ]
-
+    print(f"converted parameters: {converted_parameters}")
     return converted_parameters, added_keys
 
 
@@ -952,7 +951,6 @@ def chebyshev_params_to_lambda_1_lambda_2(
     upsilons = np.asarray(upsilons, dtype=float)
     eos_check = True
     eos = ChebyshevNeutronStarEOSSpectralDecomposition(upsilons)
-    print(f"eos: {eos}")
     lambda_1, lambda_2, eos_check = neutron_star_family_physical_check(
         eos, mass_1_source, mass_2_source
     )
@@ -1066,6 +1064,7 @@ def neutron_star_family_physical_check(eos, mass_1_source, mass_2_source):
 
     """
     eos_check = True
+    print(f"eos inside neutron star family physical check func: {eos}")
     family = lalsim_CreateSimNeutronStarFamily(eos)
     max_pseudo_enthalpy = lalsim_SimNeutronStarEOSMaxPseudoEnthalpy(eos)
     max_speed_of_sound = lalsim_SimNeutronStarEOSSpeedOfSoundGeometerized(
@@ -1080,7 +1079,6 @@ def neutron_star_family_physical_check(eos, mass_1_source, mass_2_source):
     ):
         lambda_1 = lambda_from_mass_and_family(mass_1_source, family)
         lambda_2 = lambda_from_mass_and_family(mass_2_source, family)
-        print(f"lambda 1 and lambda 2: {lambda_1}, {lambda_2}")
     else:
         lambda_1 = 0.0
         lambda_2 = 0.0
