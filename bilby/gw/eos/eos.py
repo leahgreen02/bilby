@@ -1266,10 +1266,14 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
     )
 
     p_table, e_table = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
+    print("p_table", p_table)
+    print("e_table", e_table)
     eos_table = np.column_stack((p_table, e_table))
     eos_table = np.ascontiguousarray(eos_table, dtype=np.float64)
+    print("eos_table", eos_table)
     ndat, ncol = eos_table.shape
     eos = lalsim.XLALSimNeutronStarEOSFromArray(eos_table, ndat, ncol, b"chebyshev_spectral")
+    print("eos", eos)
 
     return eos 
 
