@@ -1,9 +1,13 @@
 import os
 import numpy as np
+import lal 
+import lalsimulation as lalsim
 from scipy.interpolate import interp1d, CubicSpline
 from numpy.polynomial import chebyshev as cheb
 from scipy.interpolate import PchipInterpolator
 from scipy.integrate import solve_ivp
+from numpy.ctypeslib import ndpointer
+
 
 from .tov_solver import IntegrateTOV
 from ...core import utils
@@ -1261,7 +1265,13 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
         npts=ndat,
     )
 
-    return model
+    p_table, e_table = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
+    eos_table = np.column_stack((p_table, e_table))
+    eos_table = np.ascontiguousarray(eos_table, dtype=np.float64)
+    ndat, ncol = eos_table.shape
+    eos = lalsim.XLALSimNeutronStarEOSFromArray(eos_table, ndat, ncol, b"chebyshev_spectral")
+
+    return eos 
 
 
 class EOSFamily(object):
