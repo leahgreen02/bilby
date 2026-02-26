@@ -1018,7 +1018,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
 
         # Stack without reordering (keeps SLY4 order as-is)
         eos_vals = np.vstack((low_density[0:break_pt, :], eos_vals))
-        # print('eos_vals', eos_vals)
+        print('eos_vals', eos_vals)
 
         return eos_vals
 
@@ -1265,6 +1265,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
         npts=ndat,
     )
 
+    print("table", model._ChebSpectralDecompositionEOS__construct_e_of_p_table())
     p_table, e_table = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
     print("p_table", p_table)
     print("e_table", e_table)
