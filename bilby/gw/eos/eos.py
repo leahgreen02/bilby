@@ -874,7 +874,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         gamma0 = ((self.e0_geom + self.p0_geom) / self.p0_geom) / dede_p0_sly
         return float(np.clip(gamma0, 0.6, 4.6))
 
-    # try without clamp=False
+    # complete spectral expansion equation (lindblom & zhou, eq. 3)
     def generating_function(self, x, upsilons):
         x = np.asarray(x, float)
         y = -1.0 + 2.0 * (x / self.xmax)
@@ -916,7 +916,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         G = self.generating_function(integration_points, upsilons)
         # inverse of generating function
         s = 1.0 / G
-        # pressure back to cgs units
+        # pressure back to geom units
         p = self.p0_geom * np.exp(integration_points)
         # interpolators
         s_interp = interp1d(
