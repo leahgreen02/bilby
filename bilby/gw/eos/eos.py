@@ -1276,9 +1276,9 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
     ndat, ncol = eos_table.shape
     print("shape", eos_table.shape)
     # XLALSimNeutronStarEOSFromArray
-    # integer = 29
+    integer = 29
     # "chebyshev_spectral"
-    eos = lalsim.SimNeutronStarEOSFromArray(ndat, ncol)
+    eos = lalsim.SimNeutronStarEOSFromArray(integer, ndat, ncol)
     print("eos", eos)
 
     return eos 
