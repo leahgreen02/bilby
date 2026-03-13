@@ -2,6 +2,7 @@ import os
 import numpy as np
 import lal 
 import lalsimulation as lalsim
+import ctypes
 from scipy.interpolate import interp1d, CubicSpline
 from numpy.polynomial import chebyshev as cheb
 from scipy.interpolate import PchipInterpolator
@@ -1264,7 +1265,17 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
         xmax=xmax,
         npts=ndat,
     )
-
+    #load library
+    lalsim_lib = ctypes.CDLL("/home/leah.green/.conda/envs/igwn_py310_chebyshev/lib/liblalsimulation.so")
+    #function signature
+    lalsim_lib.XLALSimNeutronStarEOSFromArray.restype = ctypes.c_void_p
+    lalsim_lib.XLALSimNeutronStarEOSFromArray.argtypes = [
+        ctypes.POINTER(ctypes.c_double),  # double *testing
+        ctypes.c_size_t,                  # size_t ndat
+        ctypes.c_size_t,                  # size_t ncol
+        ctypes.c_char_p                   # const char *name
+    ]
+    
     eos_vals = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
     p_table = eos_vals[:, 0]
     e_table = eos_vals[:, 1]
@@ -1275,14 +1286,24 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
     print("eos_table", eos_table)
     ndat, ncol = eos_table.shape
     print("shape", eos_table.shape)
+
+    #get pointer
+    array_ptr = eos_table.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
     # XLALSimNeutronStarEOSFromArray
     #integer = 29
     # "chebyshev_spectral"
     #dummy = 1
-    eos = lalsim.SimNeutronStarEOSFromArray(eos_table, ndat, ncol, "chebyshev_spectral")
-    print("eos", eos)
+    # new call to lalsim
+    eos_ptr = lalsim_lib.XLALSimNeutronStarEOSFromArray(
+        array_ptr,
+        ctypes.c_size_t(ndat),
+        ctypes.c_size_t(ncol),
+        b"chebyshev_spectral"  # note: bytes not string
+    )
+    #eos = lalsim.SimNeutronStarEOSFromArray(eos_table, ndat, ncol, "chebyshev_spectral")
+    print("eos", eos_ptr)
 
-    return eos 
+    return eos_ptr 
 
 
 class EOSFamily(object):
