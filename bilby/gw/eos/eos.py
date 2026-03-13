@@ -1301,9 +1301,9 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
         b"chebyshev_spectral"  # note: bytes not string
     )
     #eos = lalsim.SimNeutronStarEOSFromArray(eos_table, ndat, ncol, "chebyshev_spectral")
-    print("eos", eos_ptr)
-
-    return eos_ptr 
+    eos = lalsim.SimNeutronStarEOS(eos_ptr)
+    print("eos", eos)
+    return eos 
 
 
 class EOSFamily(object):
