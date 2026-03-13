@@ -1301,7 +1301,12 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
         b"chebyshev_spectral"  # note: bytes not string
     )
     #eos = lalsim.SimNeutronStarEOSFromArray(eos_table, ndat, ncol, "chebyshev_spectral")
-    eos = lalsim.SimNeutronStarEOS(eos_ptr)
+    #eos = lalsim.SimNeutronStarEOS(eos_ptr)
+
+    eos = lalsim.SimNeutronStarEOSByName("SLy")
+
+    # replace its internal pointer with ours
+    eos.this = eos_ptr
     print("eos", eos)
     return eos 
 
