@@ -123,7 +123,7 @@ class TabularEOS(object):
                 )
                 + integrand[0]
             )
-
+            print('energy_density', self.energy_density)
             self.interp_energy_density_from_pressure = CubicSpline(
                 np.log10(self.pressure),
                 np.log10(self.energy_density),
