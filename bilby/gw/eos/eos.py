@@ -1266,47 +1266,53 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
         npts=ndat,
     )
     #load library
-    lalsim_lib = ctypes.CDLL("/home/leah.green/.conda/envs/igwn_py310_chebyshev/lib/liblalsimulation.so")
-    #function signature
-    lalsim_lib.XLALSimNeutronStarEOSFromArray.restype = ctypes.c_void_p
-    lalsim_lib.XLALSimNeutronStarEOSFromArray.argtypes = [
-        ctypes.POINTER(ctypes.c_double),  # double *testing
-        ctypes.c_size_t,                  # size_t ndat
-        ctypes.c_size_t,                  # size_t ncol
-        ctypes.c_char_p                   # const char *name
-    ]
+    # lalsim_lib = ctypes.CDLL("/home/leah.green/.conda/envs/igwn_py310_chebyshev/lib/liblalsimulation.so")
+    # #function signature
+    # lalsim_lib.XLALSimNeutronStarEOSFromArray.restype = ctypes.c_void_p
+    # lalsim_lib.XLALSimNeutronStarEOSFromArray.argtypes = [
+    #     ctypes.POINTER(ctypes.c_double),  # double *testing
+    #     ctypes.c_size_t,                  # size_t ndat
+    #     ctypes.c_size_t,                  # size_t ncol
+    #     ctypes.c_char_p                   # const char *name
+    # ]
     
     eos_vals = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
     p_table = eos_vals[:, 0]
     e_table = eos_vals[:, 1]
+    p_table = np.ascontiguousarray(p_table, dtype=np.float64)
+    e_table = np.ascontiguousarray(e_table, dtype=np.float64)
     print("p_table", p_table)
     print("e_table", e_table)
     #eos_table = np.column_stack((p_table, e_table))
-    eos_table = np.ascontiguousarray(np.column_stack((p_table, e_table)), dtype=np.float64)
-    print("eos_table", eos_table)
-    ndat, ncol = eos_table.shape
-    print("shape", eos_table.shape)
+    # eos_table = np.ascontiguousarray(np.column_stack((p_table, e_table)), dtype=np.float64)
+    # print("eos_table", eos_table)
+    # ndat, ncol = eos_table.shape
+    # print("shape", eos_table.shape)
 
     #get pointer
-    array_ptr = eos_table.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
+    # array_ptr = eos_table.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
     # XLALSimNeutronStarEOSFromArray
     #integer = 29
     # "chebyshev_spectral"
     #dummy = 1
     # new call to lalsim
-    eos_ptr = lalsim_lib.XLALSimNeutronStarEOSFromArray(
-        array_ptr,
-        ctypes.c_size_t(ndat),
-        ctypes.c_size_t(ncol),
-        b"chebyshev_spectral"  # note: bytes not string
-    )
-    #eos = lalsim.SimNeutronStarEOSFromArray(eos_table, ndat, ncol, "chebyshev_spectral")
-    #eos = lalsim.SimNeutronStarEOS(eos_ptr)
+    # eos_ptr = lalsim_lib.XLALSimNeutronStarEOSFromArray(
+    #     array_ptr,
+    #     ctypes.c_size_t(ndat),
+    #     ctypes.c_size_t(ncol),
+    #     b"chebyshev_spectral"  # note: bytes not string
+    # )
+    # #eos = lalsim.SimNeutronStarEOSFromArray(eos_table, ndat, ncol, "chebyshev_spectral")
+    # #eos = lalsim.SimNeutronStarEOS(eos_ptr)
 
-    eos = lalsim.SimNeutronStarEOSByName("SLy")
+    # eos = lalsim.SimNeutronStarEOSByName("SLy")
 
-    # replace its internal pointer with ours
-    eos.this = eos_ptr
+    # # replace its internal pointer with ours
+    # eos.this = eos_ptr
+
+    # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure);
+    eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
+    
     print("eos", eos)
     return eos 
 
