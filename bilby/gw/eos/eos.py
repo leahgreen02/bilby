@@ -125,19 +125,14 @@ class TabularEOS(object):
             )
             # print('log10 of energy_density', np.log10(self.energy_density))
             # print('log10 of pressure', np.log10(self.pressure))
-
-            ed = np.log10(self.energy_density)
-            diff = np.diff(ed)
-            print('non-monotonic energy density indices:', np.where(diff <= 0)[0])
-            print('values around problem:', ed[np.where(diff <= 0)[0][0]-1 : np.where(diff <= 0)[0][0]+3])
             
             self.interp_energy_density_from_pressure = CubicSpline(
                 np.log10(self.pressure), np.log10(self.energy_density)
             )
 
             # print('log10 of pseudo enthalpy', np.log10(self.pseudo_enthalpy))
-            print('negative pseudo enthalpy?', np.any(self.pseudo_enthalpy <= 0))
-            print('min enthalpy:', np.min(self.pseudo_enthalpy))
+            # print('negative pseudo enthalpy?', np.any(self.pseudo_enthalpy <= 0))
+            # print('min enthalpy:', np.min(self.pseudo_enthalpy))
             self.interp_energy_density_from_pseudo_enthalpy = CubicSpline(
                 np.log10(self.pseudo_enthalpy), np.log10(self.energy_density)
             )
@@ -1028,7 +1023,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
 
         # Stack without reordering (keeps SLY4 order as-is)
         eos_vals = np.vstack((low_density[0:break_pt, :], eos_vals))
-        print('eos_vals', eos_vals)
+        #print('eos_vals', eos_vals)
 
         return eos_vals
 
@@ -1128,8 +1123,8 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
     e_table = eos_vals[:, 1]
     p_table = np.ascontiguousarray(p_table, dtype=np.float64)
     e_table = np.ascontiguousarray(e_table, dtype=np.float64)
-    print("p_table", p_table)
-    print("e_table", e_table)
+    # print("p_table", p_table)
+    # print("e_table", e_table)
     #eos_table = np.column_stack((p_table, e_table))
     # eos_table = np.ascontiguousarray(np.column_stack((p_table, e_table)), dtype=np.float64)
     # print("eos_table", eos_table)
@@ -1160,7 +1155,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
     # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure);
     eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
     
-    print("eos", eos)
+    #print("eos", eos)
     return eos 
 
 
