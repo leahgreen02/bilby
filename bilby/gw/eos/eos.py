@@ -1025,6 +1025,15 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         eos_vals = np.vstack((low_density[0:break_pt, :], eos_vals))
         #print('eos_vals', eos_vals)
 
+        # Strip any non-positive rows before returning
+        eos_vals = eos_vals[(eos_vals[:, 0] > 0) & (eos_vals[:, 1] > 0)]
+
+        # Ensure strict monotonicity in both columns
+        # Keep only rows where both pressure and energy density are strictly increasing
+        p_increasing = np.concatenate(([True], np.diff(eos_vals[:, 0]) > 0))
+        e_increasing = np.concatenate(([True], np.diff(eos_vals[:, 1]) > 0))
+        eos_vals = eos_vals[p_increasing & e_increasing]
+
         return eos_vals
 
 
