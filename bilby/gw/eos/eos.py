@@ -125,6 +125,12 @@ class TabularEOS(object):
             )
             # print('log10 of energy_density', np.log10(self.energy_density))
             # print('log10 of pressure', np.log10(self.pressure))
+
+            ed = np.log10(self.energy_density)
+            diff = np.diff(ed)
+            print('non-monotonic energy density indices:', np.where(diff <= 0)[0])
+            print('values around problem:', ed[np.where(diff <= 0)[0][0]-1 : np.where(diff <= 0)[0][0]+3])
+            
             self.interp_energy_density_from_pressure = CubicSpline(
                 np.log10(self.pressure), np.log10(self.energy_density)
             )
