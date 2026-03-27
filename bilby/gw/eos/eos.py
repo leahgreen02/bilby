@@ -1037,7 +1037,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         return eos_vals
 
 
-def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
+def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False):
 
     upsilons = np.asarray(upsilons)  # turn the upsilons into an array
 
@@ -1115,6 +1115,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons):
         pmax=pmax,
         xmax=xmax,
         npts=ndat,
+        sampling_flag=sampling_flag
     )
     #load library
     # lalsim_lib = ctypes.CDLL("/home/leah.green/.conda/envs/igwn_py310_chebyshev/lib/liblalsimulation.so")
