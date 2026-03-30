@@ -466,6 +466,14 @@ class TabularEOS(object):
         Checks to see if the equation of state is monotonically increasing
         in energy density-pressure space. Returns True if monotonic, False if not.
         """
+        # added in a monotonicity check for pseduo enthalpy
+        integrand = self.pressure / (self.energy_density + self.pressure)
+        pseudo_enthalpy = (cumulative_trapezoid(integrand, np.log(self.pressure), initial=0) + integrand[0]
+        q1 = pseudo_enthalpy[1:]
+        q2 = pseudo_enthalpy[:-1]
+        qdiff = q1 - q2
+        q_negatives = len(np.where(qdiff < 0))
+        
         e1 = self.energy_density[1:]
         e2 = self.energy_density[:-1]
         ediff = e1 - e2
@@ -475,7 +483,7 @@ class TabularEOS(object):
         p2 = self.pressure[:-1]
         pdiff = p1 - p2
         p_negatives = len(np.where(pdiff < 0))
-        if e_negatives > 1 or p_negatives > 1:
+        if e_negatives > 1 or p_negatives > 1 or q_negatives > 1:
             return False
         else:
             return True
@@ -1053,6 +1061,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     xmax = 12.3081  # very relaxed upper limit
     pmax = p0 * np.exp(xmax)  # give units back to xmax
 
+    # sly4 tabulated values
     pressure = np.array(
         [0.00000000e+00,   2.49730009e-31,   1.59235347e-30,
          1.01533235e-29,   6.47406376e-29,   4.12805731e-28,
@@ -1115,58 +1124,24 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
         pmax=pmax,
         xmax=xmax,
         npts=ndat,
-        sampling_flag=sampling_flag
+        sampling_flag=sampling_flag,
+        warning_flag=warning_flag
     )
-    #load library
-    # lalsim_lib = ctypes.CDLL("/home/leah.green/.conda/envs/igwn_py310_chebyshev/lib/liblalsimulation.so")
-    # #function signature
-    # lalsim_lib.XLALSimNeutronStarEOSFromArray.restype = ctypes.c_void_p
-    # lalsim_lib.XLALSimNeutronStarEOSFromArray.argtypes = [
-    #     ctypes.POINTER(ctypes.c_double),  # double *testing
-    #     ctypes.c_size_t,                  # size_t ndat
-    #     ctypes.c_size_t,                  # size_t ncol
-    #     ctypes.c_char_p                   # const char *name
-    # ]
-    
-    eos_vals = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
-    p_table = eos_vals[:, 0]
-    e_table = eos_vals[:, 1]
-    p_table = np.ascontiguousarray(p_table, dtype=np.float64)
-    e_table = np.ascontiguousarray(e_table, dtype=np.float64)
-    # print("p_table", p_table)
-    # print("e_table", e_table)
-    #eos_table = np.column_stack((p_table, e_table))
-    # eos_table = np.ascontiguousarray(np.column_stack((p_table, e_table)), dtype=np.float64)
-    # print("eos_table", eos_table)
-    # ndat, ncol = eos_table.shape
-    # print("shape", eos_table.shape)
 
-    #get pointer
-    # array_ptr = eos_table.ctypes.data_as(ctypes.POINTER(ctypes.c_double))
-    # XLALSimNeutronStarEOSFromArray
-    #integer = 29
-    # "chebyshev_spectral"
-    #dummy = 1
-    # new call to lalsim
-    # eos_ptr = lalsim_lib.XLALSimNeutronStarEOSFromArray(
-    #     array_ptr,
-    #     ctypes.c_size_t(ndat),
-    #     ctypes.c_size_t(ncol),
-    #     b"chebyshev_spectral"  # note: bytes not string
-    # )
-    # #eos = lalsim.SimNeutronStarEOSFromArray(eos_table, ndat, ncol, "chebyshev_spectral")
-    # #eos = lalsim.SimNeutronStarEOS(eos_ptr)
+    # something like
+    if warning_flag = True:
+        eos = Null
+    else:
+        eos_vals = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
+        p_table = eos_vals[:, 0]
+        e_table = eos_vals[:, 1]
+        p_table = np.ascontiguousarray(p_table, dtype=np.float64)
+        e_table = np.ascontiguousarray(e_table, dtype=np.float64)
 
-    # eos = lalsim.SimNeutronStarEOSByName("SLy")
 
-    # # replace its internal pointer with ours
-    # eos.this = eos_ptr
-
-    # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure);
-    eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
-    
-    #print("eos", eos)
-    return eos 
+        # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure);
+        eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
+    return eos, warning_flag 
 
 
 class EOSFamily(object):
