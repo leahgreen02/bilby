@@ -467,6 +467,7 @@ class TabularEOS(object):
         in energy density-pressure space. Returns True if monotonic, False if not.
         """
         # added in a monotonicity check for pseduo enthalpy
+        from scipy.integrate import cumulative_trapezoid
         integrand = self.pressure / (self.energy_density + self.pressure)
         pseudo_enthalpy = (cumulative_trapezoid(integrand, np.log(self.pressure), initial=0) + integrand[0])
         q1 = pseudo_enthalpy[1:]
