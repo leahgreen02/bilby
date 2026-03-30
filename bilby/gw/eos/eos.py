@@ -468,7 +468,7 @@ class TabularEOS(object):
         """
         # added in a monotonicity check for pseduo enthalpy
         integrand = self.pressure / (self.energy_density + self.pressure)
-        pseudo_enthalpy = (cumulative_trapezoid(integrand, np.log(self.pressure), initial=0) + integrand[0]
+        pseudo_enthalpy = (cumulative_trapezoid(integrand, np.log(self.pressure), initial=0) + integrand[0])
         q1 = pseudo_enthalpy[1:]
         q2 = pseudo_enthalpy[:-1]
         qdiff = q1 - q2
@@ -1128,16 +1128,19 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
         warning_flag=warning_flag
     )
 
+    warning_flag = model.warning_flag
     # something like
-    if warning_flag = True:
-        eos = Null
+    if warning_flag:
+        eos = None
     else:
-        eos_vals = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
-        p_table = eos_vals[:, 0]
-        e_table = eos_vals[:, 1]
-        p_table = np.ascontiguousarray(p_table, dtype=np.float64)
-        e_table = np.ascontiguousarray(e_table, dtype=np.float64)
-
+        p_table = np.ascontiguousarray(model.e_pdat[:, 0], dtype=np.float64)
+        e_table = np.ascontiguousarray(model.e_pdat[:, 1], dtype=np.float64)
+        
+        # eos_vals = model._ChebSpectralDecompositionEOS__construct_e_of_p_table()
+        # p_table = eos_vals[:, 0]
+        # e_table = eos_vals[:, 1]
+        # p_table = np.ascontiguousarray(p_table, dtype=np.float64)
+        # e_table = np.ascontiguousarray(e_table, dtype=np.float64)
 
         # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure);
         eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
