@@ -1045,7 +1045,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         return eos_vals
 
 
-def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False):
+def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False, warning_flag = False):
 
     upsilons = np.asarray(upsilons)  # turn the upsilons into an array
 
