@@ -516,8 +516,8 @@ class TabularEOS(object):
         p2 = self.pressure[:-1]
         pdiff = p1 - p2
         p_negatives = len(np.where(pdiff < 0))
-        # if e_negatives > 1 or p_negatives > 1 or q_negatives > 1:
-        if e_negatives > 0 or p_negatives > 0 or q_negatives > 0:
+        
+        if e_negatives > 1 or p_negatives > 1 or q_negatives > 1:
             return False
         else:
             return True
