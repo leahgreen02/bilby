@@ -128,6 +128,11 @@ class TabularEOS(object):
             )
             # print('log10 of energy_density', np.log10(self.energy_density))
             # print('log10 of pressure', np.log10(self.pressure))
+
+            print("min pseudo_enthalpy:", np.min(self.pseudo_enthalpy))
+            print("any <= 0:", np.any(self.pseudo_enthalpy <= 0))
+            print("any nan:", np.any(np.isnan(self.pseudo_enthalpy)))
+            print("any inf:", np.any(np.isinf(self.pseudo_enthalpy)))
             
             self.interp_energy_density_from_pressure = CubicSpline(
                 np.log10(self.pressure), np.log10(self.energy_density)
