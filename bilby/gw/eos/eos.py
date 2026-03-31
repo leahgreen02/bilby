@@ -1046,6 +1046,14 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         e_increasing = np.concatenate(([True], np.diff(eos_vals[:, 1]) > 0))
         eos_vals = eos_vals[p_increasing & e_increasing]
 
+        ph_integrand = eos_vals[:, 0] / (eos_vals[:, 1] + eos_vals[:, 0])
+        import scipy.integrate
+        ph = scipy.integrate.cumulative_trapezoid(ph_integrand, np.log(eos_vals[:, 0]), initial=0) + ph_integrand[0]
+        non_mono = np.where(np.diff(ph) <= 0)[0]
+        print("Non-monotonic pseudo_enthalpy at indices:", non_mono)
+        print("Around stitch point (break_pt):", break_pt)
+        print("Pressures around stitch:", eos_vals[break_pt-2:break_pt+2, 0])
+        
         return eos_vals
 
 
