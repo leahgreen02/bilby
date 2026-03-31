@@ -150,6 +150,10 @@ class TabularEOS(object):
 
             self.__construct_all_tables()
 
+            non_mono = np.where(np.diff(self.pseudo_enthalpy) <= 0)[0]
+            print("Non-monotonic pseudo_enthalpy after __construct_all_tables:", non_mono)
+            print("Values around problem:", self.pseudo_enthalpy[non_mono[0]-1:non_mono[0]+3] if len(non_mono) > 0 else "none")
+
             self.minimum_pseudo_enthalpy = min(self.pseudo_enthalpy)
             if not self.check_causality() and self.sampling_flag:
                 self.warning_flag = True
