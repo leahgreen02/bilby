@@ -501,7 +501,12 @@ class TabularEOS(object):
         # added in a monotonicity check for pseduo enthalpy
         from scipy.integrate import cumulative_trapezoid
         integrand = self.pressure / (self.energy_density + self.pressure)
+        print('energy + pressure:', self.energy_density + self.pressure)
+        print('integrand:', integrand)
         pseudo_enthalpy = (cumulative_trapezoid(integrand, np.log(self.pressure), initial=0) + integrand[0])
+        print('pressure:', self.pressure)
+        print('ps enthalpy:', pseudo_enthalpy)
+        print('integrand[0]:', integrand[0])
         q1 = pseudo_enthalpy[1:]
         q2 = pseudo_enthalpy[:-1]
         qdiff = q1 - q2
