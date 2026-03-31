@@ -506,16 +506,19 @@ class TabularEOS(object):
         q2 = pseudo_enthalpy[:-1]
         qdiff = q1 - q2
         q_negatives = len(np.where(qdiff < 0))
+        print('if q>1 then false:', q_negatives)
         
         e1 = self.energy_density[1:]
         e2 = self.energy_density[:-1]
         ediff = e1 - e2
         e_negatives = len(np.where(ediff < 0))
+        print('if e>1 then false:', e_negatives)
 
         p1 = self.pressure[1:]
         p2 = self.pressure[:-1]
         pdiff = p1 - p2
         p_negatives = len(np.where(pdiff < 0))
+        print('if p>1 then false:', p_negatives)
         
         if e_negatives > 1 or p_negatives > 1 or q_negatives > 1:
             return False
