@@ -109,6 +109,9 @@ class TabularEOS(object):
         self.pressure = table[:, 0]
         self.energy_density = table[:, 1]
 
+        print("pressure[0]:", self.pressure[0])
+        print("energy_density[0]:", self.energy_density[0])
+
         self.minimum_pressure = min(self.pressure)
         self.minimum_energy_density = min(self.energy_density)
         if (
