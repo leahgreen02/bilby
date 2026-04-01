@@ -847,7 +847,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         upsilons,
         pressure,
         energy_density,
-        p0=3.01e33,
+        p0=5.0e32,
         e0=2.03e14,
         xmax=None,
         pmax=None,
@@ -856,6 +856,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         warning_flag=False,
     ):
 
+        # trying a diff p0, originally: p0=3.01e33
         self.warning_flag = warning_flag
         self.sampling_flag = sampling_flag
 
@@ -1105,8 +1106,9 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     # Minimum pressure and energy density (cgs)
     e0 = 2.03e14
     # 9.54629006e-11
-    p0 = 3.01e33
+    p0 = 5.0e32
     # 4.43784199e-13
+    # matching cheb init, p0=3.01e33
 
     xmax = 12.3081  # very relaxed upper limit
     pmax = p0 * np.exp(xmax)  # give units back to xmax
