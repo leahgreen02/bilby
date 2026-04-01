@@ -191,6 +191,9 @@ class TabularEOS(object):
 
         if table[0, 0] == 0.0 or table[0, 1] == 0.0:
             return table[1:, :]
+            print("table shape after remove_leading_zero:", table.shape)
+            print("table first few rows:", table[:3])
+            print("warning_flag in TabularEOS:", self.warning_flag)
 
         else:
             return table
@@ -500,6 +503,9 @@ class TabularEOS(object):
         """
         # added in a monotonicity check for pseduo enthalpy
         from scipy.integrate import cumulative_trapezoid
+        print("check_monotonicity called with pressure[:3]:", self.pressure[:3])
+        print("check_monotonicity called with energy_density[:3]:", self.energy_density[:3])
+        
         integrand = self.pressure / (self.energy_density + self.pressure)
         print('energy + pressure:', self.energy_density + self.pressure)
         print('integrand:', integrand)
@@ -907,6 +913,10 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         else:
             self.e_pdat = self.__construct_e_of_p_table()
 
+        print("e_pdat shape:", self.e_pdat.shape)
+        print("e_pdat:", self.e_pdat)
+        print("warning_flag before super:", self.warning_flag)
+        
         super().__init__(
             self.e_pdat,
             sampling_flag=self.sampling_flag,
