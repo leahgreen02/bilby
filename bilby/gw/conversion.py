@@ -950,7 +950,10 @@ def chebyshev_params_to_lambda_1_lambda_2(
     """
     upsilons = np.asarray(upsilons, dtype=float)
     eos_check = True
-    eos, warning_flag = ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag=True)
+    try: 
+        eos, warning_flag = ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag=True)
+    except (ValueError, RuntimeError):
+        return 0.0, 0.0, False
     if not warning_flag:
         lambda_1, lambda_2, eos_check = neutron_star_family_physical_check(eos, mass_1_source, mass_2_source)
     else:
