@@ -493,6 +493,7 @@ class TabularEOS(object):
         emax = self.energy_from_pressure(pmax)
         hmax = self.pseudo_enthalpy_from_energy_density(emax)
         vsmax = self.velocity_from_pseudo_enthalpy(hmax)
+        print(f"check_causality: vsmax={vsmax:.6f}", flush=True)
         if vsmax < 1.1:
             return True
         else:
