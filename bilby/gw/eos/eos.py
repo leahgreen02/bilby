@@ -947,18 +947,21 @@ class ChebSpectralDecompositionEOS(TabularEOS):
     def generating_function(self, x, upsilons):
         x = np.asarray(x, float)
         y = -1.0 + 2.0 * (x / self.xmax)
+        print('y first and last value:', y[0], y[-1])
         s = cheb.chebval(y, upsilons)
         arg = (1.0 + y) * s
         gamma = self.upsilon0 * np.exp(arg)
         return gamma
 
     def compute_energy_density_array(self, x_array, upsilons):
+        print('self.xmax at start of energy density array func:', self.xmax)
         # array and float
         x = np.asarray(x_array, float)
         # output array that will be returned with the correct(?) values
 
         # Find the range of x values to integrate over
         x_min, x_max = x.min(), x.max()
+        print('xmax defined in E.D. array:', x_max)
 
         # Ensure we include x=0 in our integration range
         if x_min > 0:
@@ -1065,6 +1068,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         """
         # Spectral branch (geom)
         x_range = np.linspace(0.0, self.xmax, self.npts)
+        print('self.xmax in e of p table:', self.xmax)
         p_range_geom = self.p0_geom * np.exp(x_range)
         eps_range_geom = self.compute_energy_density_array(
             x_range, self.upsilons
