@@ -947,7 +947,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
     def generating_function(self, x, upsilons):
         x = np.asarray(x, float)
         y = -1.0 + 2.0 * (x / self.xmax)
-        print('y first and last value:', y[0], y[-1])
+        print('y in generating function:', y)
         s = cheb.chebval(y, upsilons)
         arg = (1.0 + y) * s
         gamma = self.upsilon0 * np.exp(arg)
