@@ -135,25 +135,25 @@ class TabularEOS(object):
             log_p = np.log10(self.pressure)
             non_mono_p = np.where(np.diff(log_p) <= 0)[0]
             #print("Non-monotonic log10(pressure) indices:", non_mono_p, flush=True)
-            if len(non_mono_p) > 0:
+            #if len(non_mono_p) > 0:
                 #print("Pressure values:", self.pressure[non_mono_p[0]-1:non_mono_p[0]+3], flush=True)
 
             # Check energy density
             log_e = np.log10(self.energy_density)
             non_mono_e = np.where(np.diff(log_e) <= 0)[0]
             #print("Non-monotonic log10(energy_density) indices:", non_mono_e, flush=True)
-            if len(non_mono_e) > 0:
+            #if len(non_mono_e) > 0:
                 #print("Energy density values:", self.energy_density[non_mono_e[0]-1:non_mono_e[0]+3], flush=True)
 
             # Check pseudo_enthalpy
             log_ph = np.log10(self.pseudo_enthalpy)
             non_mono_ph = np.where(np.diff(log_ph) <= 0)[0]
             #print("Non-monotonic log10(pseudo_enthalpy) indices:", non_mono_ph, flush=True)
-            if len(non_mono_ph) > 0:
+            #if len(non_mono_ph) > 0:
                 #print("Pseudo-enthalpy values:", self.pseudo_enthalpy[non_mono_ph[0]-1:non_mono_ph[0]+3], flush=True)
 
             # Check for NaN/inf in all three
-            for name, arr in [("pressure", self.pressure), ("energy_density", self.energy_density), ("pseudo_enthalpy", self.pseudo_enthalpy)]:
+            #for name, arr in [("pressure", self.pressure), ("energy_density", self.energy_density), ("pseudo_enthalpy", self.pseudo_enthalpy)]:
                 #print(f"{name} - nan: {np.any(np.isnan(arr))}, inf: {np.any(np.isinf(arr))}, min: {np.min(arr)}, len: {len(arr)}", flush=True)
             
             self.interp_energy_density_from_pressure = CubicSpline(
