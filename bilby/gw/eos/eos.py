@@ -111,9 +111,6 @@ class TabularEOS(object):
         self.pressure = table[:, 0]
         self.energy_density = table[:, 1]
 
-        #print("pressure[0]:", self.pressure[0], flush=True)
-        #print("energy_density[0]:", self.energy_density[0], flush=True)
-
         self.minimum_pressure = min(self.pressure)
         self.minimum_energy_density = min(self.energy_density)
         if (
@@ -128,41 +125,24 @@ class TabularEOS(object):
                 )
                 + integrand[0]
             )
-            # print('log10 of energy_density', np.log10(self.energy_density))
-            # print('log10 of pressure', np.log10(self.pressure))
 
             # Check pressure
             log_p = np.log10(self.pressure)
             non_mono_p = np.where(np.diff(log_p) <= 0)[0]
-            #print("Non-monotonic log10(pressure) indices:", non_mono_p, flush=True)
-            #if len(non_mono_p) > 0:
-                #print("Pressure values:", self.pressure[non_mono_p[0]-1:non_mono_p[0]+3], flush=True)
 
             # Check energy density
             log_e = np.log10(self.energy_density)
             non_mono_e = np.where(np.diff(log_e) <= 0)[0]
-            #print("Non-monotonic log10(energy_density) indices:", non_mono_e, flush=True)
-            #if len(non_mono_e) > 0:
-                #print("Energy density values:", self.energy_density[non_mono_e[0]-1:non_mono_e[0]+3], flush=True)
 
             # Check pseudo_enthalpy
             log_ph = np.log10(self.pseudo_enthalpy)
             non_mono_ph = np.where(np.diff(log_ph) <= 0)[0]
-            #print("Non-monotonic log10(pseudo_enthalpy) indices:", non_mono_ph, flush=True)
-            #if len(non_mono_ph) > 0:
-                #print("Pseudo-enthalpy values:", self.pseudo_enthalpy[non_mono_ph[0]-1:non_mono_ph[0]+3], flush=True)
 
-            # Check for NaN/inf in all three
-            #for name, arr in [("pressure", self.pressure), ("energy_density", self.energy_density), ("pseudo_enthalpy", self.pseudo_enthalpy)]:
-                #print(f"{name} - nan: {np.any(np.isnan(arr))}, inf: {np.any(np.isinf(arr))}, min: {np.min(arr)}, len: {len(arr)}", flush=True)
             
             self.interp_energy_density_from_pressure = CubicSpline(
                 np.log10(self.pressure), np.log10(self.energy_density)
             )
 
-            # print('log10 of pseudo enthalpy', np.log10(self.pseudo_enthalpy))
-            # print('negative pseudo enthalpy?', np.any(self.pseudo_enthalpy <= 0))
-            # print('min enthalpy:', np.min(self.pseudo_enthalpy))
             self.interp_energy_density_from_pseudo_enthalpy = CubicSpline(
                 np.log10(self.pseudo_enthalpy), np.log10(self.energy_density)
             )
@@ -178,8 +158,6 @@ class TabularEOS(object):
             self.__construct_all_tables()
 
             non_mono = np.where(np.diff(self.pseudo_enthalpy) <= 0)[0]
-            #print("Non-monotonic pseudo_enthalpy after __construct_all_tables:", non_mono, flush=True)
-            #print("Values around problem:", self.pseudo_enthalpy[non_mono[0]-1:non_mono[0]+3] if len(non_mono) > 0 else "none", flush=True)
 
             self.minimum_pseudo_enthalpy = min(self.pseudo_enthalpy)
             if not self.check_causality() and self.sampling_flag:
@@ -193,9 +171,6 @@ class TabularEOS(object):
 
         if table[0, 0] == 0.0 or table[0, 1] == 0.0:
             return table[1:, :]
-            #print("table shape after remove_leading_zero:", table.shape, flush=True)
-            #print("table first few rows:", table[:3], flush=True)
-            #print("warning_flag in TabularEOS:", self.warning_flag, flush=True)
 
         else:
             return table
@@ -493,7 +468,6 @@ class TabularEOS(object):
         emax = self.energy_from_pressure(pmax)
         hmax = self.pseudo_enthalpy_from_energy_density(emax)
         vsmax = self.velocity_from_pseudo_enthalpy(hmax)
-        print(f"check_causality: vsmax={vsmax:.6f}", flush=True)
         if vsmax < 1.1:
             return True
         else:
@@ -506,33 +480,23 @@ class TabularEOS(object):
         """
         # added in a monotonicity check for pseduo enthalpy
         from scipy.integrate import cumulative_trapezoid
-        #print("check_monotonicity called with pressure[:3]:", self.pressure[:3], flush=True)
-        #print("check_monotonicity called with energy_density[:3]:", self.energy_density[:3], flush=True)
         
         integrand = self.pressure / (self.energy_density + self.pressure)
-        # print('energy + pressure:', self.energy_density + self.pressure)
-        # print('integrand:', integrand)
         pseudo_enthalpy = (cumulative_trapezoid(integrand, np.log(self.pressure), initial=0) + integrand[0])
-        # print('pressure:', self.pressure)
-        # print('ps enthalpy:', pseudo_enthalpy)
-        #print('integrand[0]:', integrand[0], flush=True)
         q1 = pseudo_enthalpy[1:]
         q2 = pseudo_enthalpy[:-1]
         qdiff = q1 - q2
         q_negatives = len(np.where(qdiff < 0))
-        #print('if q>1 then false:', q_negatives, flush=True)
         
         e1 = self.energy_density[1:]
         e2 = self.energy_density[:-1]
         ediff = e1 - e2
         e_negatives = len(np.where(ediff < 0))
-        #print('if e>1 then false:', e_negatives, flush=True)
 
         p1 = self.pressure[1:]
         p2 = self.pressure[:-1]
         pdiff = p1 - p2
         p_negatives = len(np.where(pdiff < 0))
-        #print('if p>1 then false:', p_negatives, flush=True)
         
         if e_negatives > 1 or p_negatives > 1 or q_negatives > 1:
             return False
@@ -915,10 +879,6 @@ class ChebSpectralDecompositionEOS(TabularEOS):
             self.e_pdat = np.zeros((2, 2))
         else:
             self.e_pdat = self.__construct_e_of_p_table()
-
-        #print("e_pdat shape:", self.e_pdat.shape, flush=True)
-        #print("e_pdat:", self.e_pdat, flush=True)
-        #print("warning_flag before super:", self.warning_flag, flush=True)
         
         super().__init__(
             self.e_pdat,
@@ -947,21 +907,18 @@ class ChebSpectralDecompositionEOS(TabularEOS):
     def generating_function(self, x, upsilons):
         x = np.asarray(x, float)
         y = -1.0 + 2.0 * (x / self.xmax)
-        #print('y in generating function:', y)
         s = cheb.chebval(y, upsilons)
         arg = (1.0 + y) * s
         gamma = self.upsilon0 * np.exp(arg)
         return gamma
 
     def compute_energy_density_array(self, x_array, upsilons):
-        #print('self.xmax at start of energy density array func:', self.xmax)
         # array and float
         x = np.asarray(x_array, float)
         # output array that will be returned with the correct(?) values
 
         # Find the range of x values to integrate over
         x_min, x_max = x.min(), x.max()
-        #print('xmax defined in E.D. array:', x_max)
 
         # Ensure we include x=0 in our integration range
         if x_min > 0:
@@ -1068,7 +1025,6 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         """
         # Spectral branch (geom)
         x_range = np.linspace(0.0, self.xmax, self.npts)
-        #print('self.xmax in e of p table:', self.xmax)
         p_range_geom = self.p0_geom * np.exp(x_range)
         eps_range_geom = self.compute_energy_density_array(
             x_range, self.upsilons
@@ -1091,7 +1047,6 @@ class ChebSpectralDecompositionEOS(TabularEOS):
 
         # Stack without reordering (keeps SLY4 order as-is)
         eos_vals = np.vstack((low_density[0:break_pt, :], eos_vals))
-        #print('eos_vals', eos_vals)
 
         # Strip any non-positive rows before returning
         eos_vals = eos_vals[(eos_vals[:, 0] > 0) & (eos_vals[:, 1] > 0)]
@@ -1106,9 +1061,6 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         import scipy.integrate
         ph = scipy.integrate.cumulative_trapezoid(ph_integrand, np.log(eos_vals[:, 0]), initial=0) + ph_integrand[0]
         non_mono = np.where(np.diff(ph) <= 0)[0]
-        #print("Non-monotonic pseudo_enthalpy at indices:", non_mono, flush=True)
-        #print("Around stitch point (break_pt):", break_pt, flush=True)
-        #print("Pressures around stitch:", eos_vals[break_pt-2:break_pt+2, 0], flush=True)
         
         return eos_vals
 
