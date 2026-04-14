@@ -786,7 +786,7 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
     added_keys = [
         key for key in converted_parameters.keys() if key not in original_keys
     ]
-    print(f"converted parameters: {converted_parameters}")
+    print(f"lambda 1: {lambda_1} and lambda 2: {lambda_2}")
     return converted_parameters, added_keys
 
 
@@ -1070,8 +1070,6 @@ def neutron_star_family_physical_check(eos, mass_1_source, mass_2_source):
 
     """
     eos_check = True
-    print(f"DEBUG: eos type is {type(eos)}")
-    print(f"eos inside neutron star family physical check func: {eos}")
     family = lalsim_CreateSimNeutronStarFamily(eos)
     max_pseudo_enthalpy = lalsim_SimNeutronStarEOSMaxPseudoEnthalpy(eos)
     max_speed_of_sound = lalsim_SimNeutronStarEOSSpeedOfSoundGeometerized(
