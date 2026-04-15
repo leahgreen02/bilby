@@ -787,7 +787,8 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
     added_keys = [
         key for key in converted_parameters.keys() if key not in original_keys
     ]
-    print(f"lambda 1: {converted_parameters["lambda_1"]} and lambda 2: {converted_parameters["lambda_2"]}")
+    print('lambda 1:', converted_parameters["lambda_1"])
+    print('lambda 2:', converted_parameters["lambda_2"])
     return converted_parameters, added_keys
 
 
