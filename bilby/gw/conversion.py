@@ -448,6 +448,7 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
             converted_parameters["mass_1_source"],
             converted_parameters["mass_2_source"],
         )
+        
     elif (
         "eos_spectral_pca_gamma_0" in converted_parameters.keys()
     ):  # FIXME: This is a clunky way to do this
@@ -786,7 +787,7 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
     added_keys = [
         key for key in converted_parameters.keys() if key not in original_keys
     ]
-    print(f"lambda 1: {lambda_1} and lambda 2: {lambda_2}")
+    print(f"lambda 1: {converted_parameters["lambda_1"]} and lambda 2: {converted_parameters["lambda_2"]}")
     return converted_parameters, added_keys
 
 
