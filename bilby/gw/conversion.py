@@ -1072,20 +1072,26 @@ def neutron_star_family_physical_check(eos, mass_1_source, mass_2_source):
 
     """
     eos_check = True
-    family = lalsim_CreateSimNeutronStarFamily(eos)
-    max_pseudo_enthalpy = lalsim_SimNeutronStarEOSMaxPseudoEnthalpy(eos)
-    max_speed_of_sound = lalsim_SimNeutronStarEOSSpeedOfSoundGeometerized(
-        max_pseudo_enthalpy, eos
-    )
-    min_mass = lalsim_SimNeutronStarFamMinimumMass(family) / solar_mass
-    max_mass = lalsim_SimNeutronStarMaximumMass(family) / solar_mass
+    try:
+        family = lalsim_CreateSimNeutronStarFamily(eos)
+        max_pseudo_enthalpy = lalsim_SimNeutronStarEOSMaxPseudoEnthalpy(eos)
+        max_speed_of_sound = lalsim_SimNeutronStarEOSSpeedOfSoundGeometerized(
+            max_pseudo_enthalpy, eos
+        )
+        min_mass = lalsim_SimNeutronStarFamMinimumMass(family) / solar_mass
+        max_mass = lalsim_SimNeutronStarMaximumMass(family) / solar_mass
+    except RuntimeError:
+        return 0.0, 0.0, False
     if (
         max_speed_of_sound <= 1.1
         and min_mass <= mass_1_source <= max_mass
         and min_mass <= mass_2_source <= max_mass
     ):
-        lambda_1 = lambda_from_mass_and_family(mass_1_source, family)
-        lambda_2 = lambda_from_mass_and_family(mass_2_source, family)
+        try:
+            lambda_1 = lambda_from_mass_and_family(mass_1_source, family)
+            lambda_2 = lambda_from_mass_and_family(mass_2_source, family)
+        except RuntimeError:
+            return 0.0, 0.0, False
     else:
         lambda_1 = 0.0
         lambda_2 = 0.0
