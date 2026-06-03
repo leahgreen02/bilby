@@ -1165,6 +1165,15 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     p_table = np.ascontiguousarray(model.e_pdat[:, 0], dtype=np.float64)
     e_table = np.ascontiguousarray(model.e_pdat[:, 1], dtype=np.float64)
 
+    if len(p_table) < 10 or len(e_table) < 10:
+        return None, True
+
+    if not np.all(np.isfinite(p_table)) or not np.all(np.isfinite(e_table)):
+        return None, True
+        
+    if not np.all(np.diff(p_table) > 0):
+        return None, True
+    
     # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure);
     eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
     return eos, warning_flag 
