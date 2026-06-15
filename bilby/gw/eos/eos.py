@@ -1165,18 +1165,41 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     p_table = np.ascontiguousarray(model.e_pdat[:, 0], dtype=np.float64)
     e_table = np.ascontiguousarray(model.e_pdat[:, 1], dtype=np.float64)
 
-    if len(p_table) < 10 or len(e_table) < 10:
+    # check length
+    print("length of p_table", len(p_table))
+    if len(p_table) < 50 or len(e_table) < 50:
         return None, True
 
+    # finite check
     if not np.all(np.isfinite(p_table)) or not np.all(np.isfinite(e_table)):
         return None, True
-        
+
+    # monotonicity check
     if not np.all(np.diff(p_table) > 0):
         return None, True
-    
-    # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure);
-    eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
-    return eos, warning_flag 
+    if not np.all(np.diff(p_table) > 0):
+        return None, True
+
+    # positive numbers
+    if np.any(p_table <= 0) or np.any(e_table <= 0):
+        return None, True
+
+    # another guard for lalsim
+    print("lalsim guard", np.log10(p_table[-1] / p_table[0]))
+    if np.log10(p_table[-1] / p_table[0]) < 4.0:
+        return None, True
+
+    #bounds
+    if p_table[0] > p0 or p_table[-1] < p0:
+        return None, True
+
+    try:
+        eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
+    except Exception:
+        return None, True
+
+    return eos, warning_flag
+    # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure); 
 
 
 class EOSFamily(object):
