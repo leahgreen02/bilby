@@ -1082,6 +1082,7 @@ def neutron_star_family_physical_check(eos, mass_1_source, mass_2_source):
         max_mass = lalsim_SimNeutronStarMaximumMass(family) / solar_mass
     except RuntimeError:
         return 0.0, 0.0, False
+    print(f"  min_mass={min_mass:.4f}, max_mass={max_mass:.4f}, sos={max_speed_of_sound:.4f}")
     if (
         max_speed_of_sound <= 1.1
         and min_mass <= mass_1_source <= max_mass
