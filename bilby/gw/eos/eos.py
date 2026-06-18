@@ -1079,7 +1079,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     # Minimum pressure and energy density (cgs)
     e0 = 2.03e14
     # 9.54629006e-11
-    p0 = 5.0e32
+    p0 = 1.64e33
     # 4.43784199e-13
     # matching cheb init, p0=3.01e33
 
