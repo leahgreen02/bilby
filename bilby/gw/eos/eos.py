@@ -1201,8 +1201,19 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
         return None, True
 
     #bounds
-    if p_table[0] > p0 or p_table[-1] < p0:
-        print("p0 out of bounds")
+    # if p_table[0] > p0 or p_table[-1] < p0:
+    #     print("p0 out of bounds")
+    #     return None, True
+
+    # p0 was out of bounds, here's a new check
+
+    G_SI = 6.67430e-11
+    C_SI = 2.99792458e8
+    geom_factor = 0.1 * G_SI / (C_SI**4)
+    p0_geom = p0 * geom_factor
+
+    if p_table[0] > p0_geom or p_table[-1] < p0_geom:
+        print(f"  RETURNING EARLY: bounds check failed p[0]={p_table[0]:.3e} p[-1]={p_table[-1]:.3e} p0_geom={p0_geom:.3e}")
         return None, True
 
     try:
