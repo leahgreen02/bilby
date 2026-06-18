@@ -468,6 +468,8 @@ class TabularEOS(object):
         emax = self.energy_from_pressure(pmax)
         hmax = self.pseudo_enthalpy_from_energy_density(emax)
         vsmax = self.velocity_from_pseudo_enthalpy(hmax)
+        # another check to find where the fail is 
+        print(f"  causality check: vsmax={vsmax:.4f}")
         if vsmax < 1.1:
             return True
         else:
@@ -879,7 +881,9 @@ class ChebSpectralDecompositionEOS(TabularEOS):
             self.e_pdat = np.zeros((2, 2))
         else:
             self.e_pdat = self.__construct_e_of_p_table()
-        
+
+        # trying to find warning flag
+        print(f"warning_flag before super().__init__: {self.warning_flag}")
         super().__init__(
             self.e_pdat,
             sampling_flag=self.sampling_flag,
