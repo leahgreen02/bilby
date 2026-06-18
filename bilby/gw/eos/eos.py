@@ -1199,7 +1199,9 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
 
     try:
         eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
-    except Exception:
+    # trying to find why i'm suffering    
+    except Exception as e:
+        print(f"  lalsim failed: {type(e).__name__}: {e}")
         return None, True
 
     return eos, warning_flag
