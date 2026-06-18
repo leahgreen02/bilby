@@ -1156,6 +1156,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     warning_flag = model.warning_flag
     # something like
     if warning_flag:
+        print("warning_flag=True")
         return None, True
     # else:
     #     p_table = np.ascontiguousarray(model.e_pdat[:, 0], dtype=np.float64)
@@ -1172,33 +1173,41 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     # check length
     print("length of p_table", len(p_table))
     if len(p_table) < 50 or len(e_table) < 50:
+        print("p table or e table too short")
         return None, True
 
     # finite check
     if not np.all(np.isfinite(p_table)) or not np.all(np.isfinite(e_table)):
+        print("something is infinite")
         return None, True
 
     # monotonicity check
     if not np.all(np.diff(p_table) > 0):
+        print("p table not monotonic")
         return None, True
-    if not np.all(np.diff(p_table) > 0):
+    if not np.all(np.diff(e_table) > 0):
+        print("e table not monotonic")
         return None, True
 
     # positive numbers
     if np.any(p_table <= 0) or np.any(e_table <= 0):
+        print("there's negative numbers")
         return None, True
 
     # another guard for lalsim
     print("lalsim guard", np.log10(p_table[-1] / p_table[0]))
     if np.log10(p_table[-1] / p_table[0]) < 4.0:
+        print("failed lalsim guard")
         return None, True
 
     #bounds
     if p_table[0] > p0 or p_table[-1] < p0:
+        print("p0 out of bounds")
         return None, True
 
     try:
         eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
+        print("lalsim success")
     # trying to find why i'm suffering    
     except Exception as e:
         print(f"  lalsim failed: {type(e).__name__}: {e}")
