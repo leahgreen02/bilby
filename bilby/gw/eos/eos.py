@@ -853,12 +853,14 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         # Domain (keep p0 fixed)
         if pmax is None:
             self.pmax_geom = self.p0_geom * np.exp(6.0)  # ~403 * p0
+            print("pmax was none", pmax)
         else:
             # current fix
             pmax_val = float(pmax)
             self.pmax_geom = (
                 pmax_val * self.geom_factor if pmax_val > 1e20 else pmax_val
             )
+            print("pmax was not none", self.pmax_geom)
         if self.pmax_geom <= self.p0_geom:
             raise ValueError(
                 "With fixed p0, pmax must be strictly greater than p0."
@@ -869,16 +871,19 @@ class ChebSpectralDecompositionEOS(TabularEOS):
             if xmax is None
             else float(xmax)
         )
+        print("xmax before super", self.xmax)
         self.npts = int(npts)
 
         # upsilon0 situation
         self.upsilon0 = self._compute_upsilon0()
+        print("upsilon0", self.upsilon0)
 
         self.__construct_a_of_x_table()
 
         # Build stitched EOS table (geom units)
         if self.warning_flag and self.sampling_flag:
             self.e_pdat = np.zeros((2, 2))
+            print("if warning flag and sampling flag before super:", self.warning_flag, self.sampling_flag)
         else:
             self.e_pdat = self.__construct_e_of_p_table()
 
