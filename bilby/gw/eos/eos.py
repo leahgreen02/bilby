@@ -1203,7 +1203,8 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     except Exception as e:
         print(f"  lalsim failed: {type(e).__name__}: {e}")
         return None, True
-
+        
+    print(f"WRAPPER: warning_flag={warning_flag}, eos={eos}")
     return eos, warning_flag
     # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure); 
 
