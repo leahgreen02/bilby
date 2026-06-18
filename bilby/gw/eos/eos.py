@@ -1171,7 +1171,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     e_table = np.ascontiguousarray(model.e_pdat[:, 1], dtype=np.float64)
 
     # check length
-    print("length of p_table", len(p_table))
+    #print("length of p_table", len(p_table))
     if len(p_table) < 50 or len(e_table) < 50:
         print("p table or e table too short")
         return None, True
@@ -1195,7 +1195,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
         return None, True
 
     # another guard for lalsim
-    print("lalsim guard", np.log10(p_table[-1] / p_table[0]))
+    #print("lalsim guard", np.log10(p_table[-1] / p_table[0]))
     if np.log10(p_table[-1] / p_table[0]) < 4.0:
         print("failed lalsim guard")
         return None, True
