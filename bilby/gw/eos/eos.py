@@ -1083,7 +1083,8 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     # 4.43784199e-13
     # matching cheb init, p0=3.01e33
 
-    xmax = 12.3081  # very relaxed upper limit
+    xmax = np.log(1e36 / p0)  # stricter xmax
+    #xmax = 12.3081  # very relaxed upper limit
     pmax = p0 * np.exp(xmax)  # give units back to xmax
 
     # sly4 tabulated values
