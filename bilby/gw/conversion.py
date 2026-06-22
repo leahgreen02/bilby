@@ -1083,6 +1083,11 @@ def neutron_star_family_physical_check(eos, mass_1_source, mass_2_source):
     except RuntimeError:
         return 0.0, 0.0, False
     print(f"  min_mass={min_mass:.4f}, max_mass={max_mass:.4f}, sos={max_speed_of_sound:.4f}")
+
+    if max_mass < 1.0:
+        print(f"  max_mass too low ({max_mass:.4f}), reject eos")
+        warning_flag = True
+    
     if (
         max_speed_of_sound <= 1.1
         and min_mass <= mass_1_source <= max_mass
