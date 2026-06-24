@@ -822,7 +822,7 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         upsilons,
         pressure,
         energy_density,
-        p0=5.0e32,
+        p0=3.01e33,
         e0=2.03e14,
         xmax=None,
         pmax=None,
@@ -853,14 +853,14 @@ class ChebSpectralDecompositionEOS(TabularEOS):
         # Domain (keep p0 fixed)
         if pmax is None:
             self.pmax_geom = self.p0_geom * np.exp(6.0)  # ~403 * p0
-            print("pmax was none", pmax)
+            #print("pmax was none", pmax)
         else:
             # current fix
             pmax_val = float(pmax)
             self.pmax_geom = (
                 pmax_val * self.geom_factor if pmax_val > 1e20 else pmax_val
             )
-            print("pmax was not none", self.pmax_geom)
+            #print("pmax was not none", self.pmax_geom)
         if self.pmax_geom <= self.p0_geom:
             raise ValueError(
                 "With fixed p0, pmax must be strictly greater than p0."
@@ -871,24 +871,25 @@ class ChebSpectralDecompositionEOS(TabularEOS):
             if xmax is None
             else float(xmax)
         )
-        print("xmax before super", self.xmax)
+        #print("xmax before super", self.xmax)
         self.npts = int(npts)
 
         # upsilon0 situation
         self.upsilon0 = self._compute_upsilon0()
-        print("upsilon0", self.upsilon0)
+        #print("upsilon0", self.upsilon0)
 
         self.__construct_a_of_x_table()
 
         # Build stitched EOS table (geom units)
         if self.warning_flag and self.sampling_flag:
             self.e_pdat = np.zeros((2, 2))
-            print("if warning flag and sampling flag before super:", self.warning_flag, self.sampling_flag)
+            #print("if warning flag and sampling flag before super:", self.warning_flag, self.sampling_flag)
         else:
             self.e_pdat = self.__construct_e_of_p_table()
 
         # trying to find warning flag
-        print(f"warning_flag before super().__init__: {self.warning_flag}")
+        #print(f"warning_flag before super().__init__: {self.warning_flag}")
+        # so far always false in my current tests 06/24/26
         super().__init__(
             self.e_pdat,
             sampling_flag=self.sampling_flag,
@@ -1179,25 +1180,25 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     # check length
     #print("length of p_table", len(p_table))
     if len(p_table) < 50 or len(e_table) < 50:
-        print("p table or e table too short")
+        #print("p table or e table too short")
         return None, True
 
     # finite check
     if not np.all(np.isfinite(p_table)) or not np.all(np.isfinite(e_table)):
-        print("something is infinite")
+        #print("something is infinite")
         return None, True
 
     # monotonicity check
     if not np.all(np.diff(p_table) > 0):
-        print("p table not monotonic")
+        #print("p table not monotonic")
         return None, True
     if not np.all(np.diff(e_table) > 0):
-        print("e table not monotonic")
+        #print("e table not monotonic")
         return None, True
 
     # positive numbers
     if np.any(p_table <= 0) or np.any(e_table <= 0):
-        print("there's negative numbers")
+        #print("there's negative numbers")
         return None, True
 
     # another guard for lalsim
@@ -1224,7 +1225,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
 
     try:
         eos = lalsim.SimNeutronStarEOSFromArrays(e_table, p_table)
-        print("lalsim success")
+        #print("lalsim success")
     # trying to find why i'm suffering    
     except Exception as e:
         print(f"  lalsim failed: {type(e).__name__}: {e}")
