@@ -1085,12 +1085,13 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     # Minimum pressure and energy density (cgs)
     e0 = 2.03e14
     # 9.54629006e-11
-    p0 = 1.64e33
+    p0 = 3.01e33
+    # 1.64e33; was this to run emulator
     # 4.43784199e-13
     # matching cheb init, p0=3.01e33
 
-    xmax = np.log(1e36 / p0)  # stricter xmax
-    #xmax = 12.3081  # very relaxed upper limit
+    #xmax = np.log(1e36 / p0)  # stricter xmax; this was to get the emulator to work
+    xmax = 12.3081  # very relaxed upper limit
     pmax = p0 * np.exp(xmax)  # give units back to xmax
 
     # sly4 tabulated values
