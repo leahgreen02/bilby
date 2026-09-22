@@ -469,7 +469,7 @@ class TabularEOS(object):
         hmax = self.pseudo_enthalpy_from_energy_density(emax)
         vsmax = self.velocity_from_pseudo_enthalpy(hmax)
         # another check to find where the fail is 
-        print(f"  causality check: vsmax={vsmax:.4f}")
+        #print(f"  causality check: vsmax={vsmax:.4f}")
         if vsmax < 1.1:
             return True
         else:
@@ -1164,7 +1164,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     warning_flag = model.warning_flag
     # something like
     if warning_flag:
-        print("warning_flag=True")
+        #print("warning_flag=True")
         return None, True
     # else:
     #     p_table = np.ascontiguousarray(model.e_pdat[:, 0], dtype=np.float64)
@@ -1205,12 +1205,12 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     # another guard for lalsim
     #print("lalsim guard", np.log10(p_table[-1] / p_table[0]))
     if np.log10(p_table[-1] / p_table[0]) < 4.0:
-        print("failed lalsim guard")
+        #print("failed lalsim guard")
         return None, True
 
     #bounds
     # if p_table[0] > p0 or p_table[-1] < p0:
-    #     print("p0 out of bounds")
+    #     #print("p0 out of bounds")
     #     return None, True
 
     # p0 was out of bounds, here's a new check
@@ -1221,7 +1221,7 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
     p0_geom = p0 * geom_factor
 
     if p_table[0] > p0_geom or p_table[-1] < p0_geom:
-        print(f"  RETURNING EARLY: bounds check failed p[0]={p_table[0]:.3e} p[-1]={p_table[-1]:.3e} p0_geom={p0_geom:.3e}")
+        #print(f"  RETURNING EARLY: bounds check failed p[0]={p_table[0]:.3e} p[-1]={p_table[-1]:.3e} p0_geom={p0_geom:.3e}")
         return None, True
 
     try:
@@ -1229,10 +1229,10 @@ def ChebyshevNeutronStarEOSSpectralDecomposition(upsilons, sampling_flag = False
         #print("lalsim success")
     # trying to find why i'm suffering    
     except Exception as e:
-        print(f"  lalsim failed: {type(e).__name__}: {e}")
+        #print(f"  lalsim failed: {type(e).__name__}: {e}")
         return None, True
         
-    print(f"WRAPPER: warning_flag={warning_flag}, eos={eos}")
+    #print(f"WRAPPER: warning_flag={warning_flag}, eos={eos}")
     return eos, warning_flag
     # LALSimNeutronStarEOS *XLALSimNeutronStarEOSFromArrays(const REAL8Vector *energy_density, const REAL8Vector *pressure); 
 
