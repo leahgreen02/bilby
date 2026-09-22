@@ -787,8 +787,10 @@ def convert_to_lal_binary_neutron_star_parameters(parameters):
     added_keys = [
         key for key in converted_parameters.keys() if key not in original_keys
     ]
-    print('lambda 1:', converted_parameters["lambda_1"])
-    print('lambda 2:', converted_parameters["lambda_2"])
+    if np.any(converted_parameters["lambda_1"] != 0):
+        print('lambda 1:', converted_parameters["lambda_1"])
+    if np.any(converted_parameters["lambda_2"] != 0):
+        print('lambda 2:', converted_parameters["lambda_2"])
     return converted_parameters, added_keys
 
 
@@ -1082,10 +1084,10 @@ def neutron_star_family_physical_check(eos, mass_1_source, mass_2_source):
         max_mass = lalsim_SimNeutronStarMaximumMass(family) / solar_mass
     except RuntimeError:
         return 0.0, 0.0, False
-    print(f"  min_mass={min_mass:.4f}, max_mass={max_mass:.4f}, sos={max_speed_of_sound:.4f}")
+    #print(f"  min_mass={min_mass:.4f}, max_mass={max_mass:.4f}, sos={max_speed_of_sound:.4f}")
 
     # if max_mass < 1.0:
-    #     print(f"  max_mass too low ({max_mass:.4f}), reject eos")
+    #     #print(f"  max_mass too low ({max_mass:.4f}), reject eos")
     #     warning_flag = True
     
     if (
