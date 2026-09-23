@@ -203,7 +203,9 @@ class TestInterferometerList(unittest.TestCase):
         self.ifo_list.set_strain_data_from_power_spectral_densities(
             sampling_frequency=123, duration=6.2, start_time=3
         )
-        m.assert_called_with(sampling_frequency=123, duration=6.2, start_time=3)
+        m.assert_called_with(
+            sampling_frequency=123, duration=6.2, start_time=3, random_state=None
+        )
         self.assertEqual(len(self.ifo_list), m.call_count)
 
     def test_inject_signal_pol_and_wg_none(self):
@@ -358,6 +360,22 @@ class TestInterferometerList(unittest.TestCase):
         ifos.plot_time_domain_data(outdir=self.outdir)
 
 
+class TestLegacyDetectorNameAlias(unittest.TestCase):
+    def test_geo600_alias_resolves_to_g1(self):
+        """GEO600 was renamed to G1; the old name must keep working."""
+        ifo = bilby.gw.detector.get_empty_interferometer("GEO600")
+        self.assertEqual(ifo.name, "G1")
+
+    def test_geo600_alias_matches_g1_directly(self):
+        alias_ifo = bilby.gw.detector.get_empty_interferometer("GEO600")
+        direct_ifo = bilby.gw.detector.get_empty_interferometer("G1")
+        self.assertEqual(alias_ifo.name, direct_ifo.name)
+        self.assertEqual(
+            alias_ifo.power_spectral_density.psd_file,
+            direct_ifo.power_spectral_density.psd_file,
+        )
+
+
 class TriangularInterferometerTest(unittest.TestCase):
     def setUp(self):
         self.triangular_ifo = bilby.gw.detector.get_empty_interferometer("ET")
@@ -387,7 +405,7 @@ class TriangularInterferometerTest(unittest.TestCase):
         for pair in list(combinations(self.triangular_ifo, 2)):
             delta_lat = np.radians(pair[1].latitude - pair[0].latitude)
             delta_long = np.radians(pair[1].longitude - pair[0].longitude)
-            pair_a = a(delta_lat, delta_long, pair[0].latitude, pair[1].latitude)
+            pair_a = a(delta_lat, delta_long, np.radians(pair[0].latitude), np.radians(pair[1].latitude))
             pair_c = c(pair_a)
             distance = bilby.core.utils.radius_of_earth * pair_c
             self.assertAlmostEqual(distance / 1000, pair[0].length, delta=1)

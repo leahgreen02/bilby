@@ -5,6 +5,7 @@ import math
 
 from ...core import utils
 from ...core.utils import logger, safe_file_dump
+from ..geometry import zenith_azimuth_to_theta_phi
 from .interferometer import Interferometer
 from .psd import PowerSpectralDensity
 
@@ -37,6 +38,16 @@ class InterferometerList(list):
             else:
                 self.append(ifo)
         self._check_interferometers()
+
+    @property
+    def reference_time(self):
+        return self._reference_time
+
+    @reference_time.setter
+    def reference_time(self, time):
+        self._reference_time = time
+        for ifo in self:
+            ifo.reference_time = time
 
     def _check_interferometers(self):
         """Verify IFOs 'duration', 'start_time', 'sampling_frequency' are the same.
@@ -74,7 +85,7 @@ class InterferometerList(list):
                     logger.warning(e)
 
     def set_strain_data_from_power_spectral_densities(
-        self, sampling_frequency, duration, start_time=0
+        self, sampling_frequency, duration, start_time=0, *, random_state=None
     ):
         """Set the `Interferometer.strain_data` from the power spectral densities of the detectors
 
@@ -97,6 +108,7 @@ class InterferometerList(list):
                 sampling_frequency=sampling_frequency,
                 duration=duration,
                 start_time=start_time,
+                random_state=random_state,
             )
 
     def set_strain_data_from_zero_noise(
@@ -331,6 +343,14 @@ class InterferometerList(list):
     )
     from_pickle.__doc__ = _load_docstring.format(format="pickle")
 
+    def set_array_backend(self, xp):
+        for ifo in self:
+            ifo.set_array_backend(xp)
+
+    @property
+    def array_backend(self):
+        return self[0].array_backend
+
 
 class TriangularInterferometer(InterferometerList):
     def __init__(
@@ -358,6 +378,8 @@ class TriangularInterferometer(InterferometerList):
         if isinstance(maximum_frequency, float) or isinstance(maximum_frequency, int):
             maximum_frequency = [maximum_frequency] * 3
 
+        brng = 90 - xarm_azimuth
+
         for ii in range(3):
             self.append(
                 Interferometer(
@@ -376,29 +398,31 @@ class TriangularInterferometer(InterferometerList):
                 )
             )
 
+            phi1 = np.radians(latitude)
+            phi2 = np.arcsin(
+                np.sin(phi1) * np.cos(length * 1e3 / utils.radius_of_earth) +
+                np.cos(phi1) * np.sin(length * 1e3 / utils.radius_of_earth) * np.cos(np.radians(brng))
+            )
+            latitude = np.degrees(phi2)
+
+            lam1 = np.radians(longitude)
+            lam2 = lam1 + np.arctan2(
+                np.sin(np.radians(brng)) * np.sin(length * 1e3 / utils.radius_of_earth) * np.cos(phi1),
+                np.cos(length * 1e3 / utils.radius_of_earth) - np.sin(phi1) * np.sin(phi2)
+            )
+            longitude = np.degrees(lam2)
+
+            brng += 240
             xarm_azimuth += 240
             yarm_azimuth += 240
 
-            latitude += (
-                np.arctan(
-                    length
-                    * np.sin(xarm_azimuth * np.pi / 180)
-                    * 1e3
-                    / utils.radius_of_earth
-                )
-                * 180
-                / np.pi
-            )
-            longitude += (
-                np.arctan(
-                    length
-                    * np.cos(xarm_azimuth * np.pi / 180)
-                    * 1e3
-                    / utils.radius_of_earth
-                )
-                * 180
-                / np.pi
-            )
+
+_LEGACY_DETECTOR_NAMES = {
+    # GEO600 was renamed to its LAL/channel-name prefix, G1, so that
+    # InterferometerList(["G1"]) matches the "G1:..." channel names found
+    # in GEO frame files. This alias keeps the old identifier working.
+    "GEO600": "G1",
+}
 
 
 def get_empty_interferometer(name):
@@ -408,16 +432,18 @@ def get_empty_interferometer(name):
     These objects do not have any noise instantiated.
 
     The available instruments are:
-        H1, L1, V1, GEO600, CE
+        H1, L1, V1, G1, CE
+
+    ``GEO600`` is accepted as a deprecated alias for ``G1``.
 
     Detector positions taken from:
         L1/H1: LIGO-T980044-10
-        V1/GEO600: arXiv:gr-qc/0008066 [45]
+        V1/G1: arXiv:gr-qc/0008066 [45]
         CE: located at the site of H1
 
     Detector sensitivities:
         H1/L1/V1: https://dcc.ligo.org/LIGO-P1200087-v42/public
-        GEO600: http://www.geo600.org/1032083/GEO600_Sensitivity_Curves
+        G1: http://www.geo600.org/1032083/GEO600_Sensitivity_Curves
         CE: https://dcc.ligo.org/LIGO-P1600143/public
 
 
@@ -431,6 +457,14 @@ def get_empty_interferometer(name):
     interferometer: Interferometer
         Interferometer instance
     """
+    if name in _LEGACY_DETECTOR_NAMES:
+        new_name = _LEGACY_DETECTOR_NAMES[name]
+        logger.warning(
+            "Interferometer name '{}' is deprecated, use '{}' instead.".format(
+                name, new_name
+            )
+        )
+        name = new_name
     filename = os.path.join(
         os.path.dirname(__file__), "detectors", "{}.interferometer".format(name)
     )
@@ -466,3 +500,9 @@ def load_interferometer(filename):
             "{} could not be loaded. Invalid parameter 'shape'.".format(filename)
         )
     return ifo
+
+
+@zenith_azimuth_to_theta_phi.dispatch
+def zenith_azimuth_to_theta_phi(zenith, azimuth, ifos: InterferometerList | list):
+    delta_x = ifos[0].geometry.vertex - ifos[1].geometry.vertex
+    return zenith_azimuth_to_theta_phi(zenith, azimuth, delta_x)
